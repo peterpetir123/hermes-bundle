@@ -1,0 +1,62 @@
+# ============================================================
+# HERMES CONFIG — Parameter BEKU (protokol vault §7)
+# Mengubah nilai tanpa lulus backtest/validate.py = PELANGGARAN.
+# ============================================================
+
+mode: "testnet"            # testnet (paper) | live
+long_only: true            # edge tervalidasi = long-only
+
+# ---- Venue: Hyperliquid (backend Phantom Perps) ----
+venue:
+  mainnet_api: "https://api.hyperliquid.xyz"
+  testnet_api: "https://api.hyperliquid-testnet.xyz"
+
+# ---- Watchlist: FOKUS aset yang ADA di Polymarket (keputusan Nahkoda) ----
+assets:
+  d1_watchlist: [BTC, ETH, SOL, XRP, DOGE]
+  # Pasang ulang nanti kalau mau kembali full (hasil riset #003):
+  # d1_watchlist: [BTC, ETH, LTC, XRP, BCH, ETC, AVAX, SOL, DOT, LINK, DOGE, ATOM, ADA, FIL, AAVE, UNI, NEAR, SUI, INJ, TIA]
+  h1_watchlist: [BTC, ETH, SOL, XRP]
+
+# ---- Parameter DON-D1 (JUARA riset 12.465 trade: +78.6R/9thn) ----
+strategy:
+  don:
+    lookback_high: 40
+    bo_buffer_atr: 0.15
+    sl_atr: 3.0
+    trail_atr: 3.5
+    volume_min: 1.5
+  regime:
+    er_window: 20
+    erp_min: 0.55
+    sma_window: 100
+
+# ---- Risk Engine ----
+risk:
+  risk_pct: 0.067            # quarter-Kelly 6.7%
+  max_positions: 3
+  circuit_breaker_daily: 0.15
+  full_margin_below_equity: 20.0   # <$20 full margin; >=$20 formula sizing
+  min_notional_usd: 10             # VERIFIKASI via test order!
+  drift_pf_floor: 0.9
+
+# ---- Polymarket (overlay konsensus — BUKAN gate entry) ----
+polymarket:
+  enabled: true
+  gamma_api: "https://gamma-api.polymarket.com"
+  focus: [BTC, ETH, SOL, XRP, DOGE]
+  role: "report_only"        # tak pernah memicu eksekusi
+
+# ---- Data fallback ----
+data:
+  okx_endpoints: ["https://www.okx.com", "https://aws.okx.com"]
+  min_bars: 300
+
+# ---- LLM (juan router) ----
+llm:
+  model: "glm-5.3-flash"
+  temperature: 0.3
+  max_tokens_report: 1200
+
+telegram:
+  enabled: true

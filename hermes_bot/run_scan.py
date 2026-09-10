@@ -1,0 +1,99 @@
+"""HERMES run_scan — orkestrator denyut (entry-point cron).
+Pipeline: config -> data -> regime -> signal -> risk -> exec -> trailing
+-> log -> digest (opsional). Polymarket = overlay laporan, bukan gate.
+"""
+import argparse, json, os, sys, urllib.request
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+
+import yaml
+from hermes_bot.core.data import fetch
+from hermes_bot.core.signals_don import scan_don
+from hermes_bot.exec.risk import check_trade, load_state
+from hermes_bot.exec.hl_exec import open_position
+from hermes_bot.exec.trailing import manage
+from hermes_bot.notify import telegram_bot as tg
+from hermes_bot.report.daily_reporter import generate
+
+# load .env sederhana (tanpa dependensi)
+ENV = os.path.join(ROOT, ".env")
+if os.path.exists(ENV):
+    for line in open(ENV):
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
+
+
+def main(digest=False):
+    cfg = yaml.safe_load(open("config.yaml"))
+    assets = cfg["assets"]["d1_watchlist"]
+    state = load_state()
+    rows_map, scans, lines = {}, [], []
+
+    for coin in assets:
+        rows = fetch(coin, "1d", "1D", cfg["data"]["min_bars"] + 100)
+        if len(rows) < cfg["data"]["min_bars"]:
+            lines.append(f"{coin}: NO_DATA")
+            continue
+        rows_map[coin] = rows
+        sig = scan_don(rows)
+        sig["coin"] = coin
+        scans.append(sig)
+        lines.append(f"{coin}: {sig['status']} ({sig.get('regime')}, "
+                     f"vol {sig.get('vol_ratio')}x, dist {sig.get('dist_atr')} ATR)")
+
+    # Polymarket overlay (report-only)
+    pm_lines = ["polymarket: disabled"]
+    if cfg.get("polymarket", {}).get("enabled"):
+        try:
+            from hermes_bot.core.polymarket import snapshot, summary_lines
+            pm_lines = summary_lines(snapshot())
+        except Exception as e:
+            pm_lines = [f"polymarket: n/a ({str(e)[:60]})"]
+
+    # risk + eksekusi
+    equity = state.get("equity") or float(os.environ.get("INIT_EQUITY", "20"))
+    opened = []
+    for sig in scans:
+        if sig.get("status") != "TRIGGER":
+            continue
+        ok, reason, plan = check_trade(sig, cfg, equity)
+        if ok:
+            pos, msg = open_position(sig["coin"], plan, sig, cfg)
+            if pos:
+                opened.append(pos)
+                tg.alert_open(pos, sig["coin"])
+        elif reason in ("CIRCUIT_BREAKER", "KILL_SWITCH", "MAX_POSITIONS", "HALTED"):
+            tg.alert_system(f"entry {sig['coin']} ditolak: {reason}")
+
+    # trailing
+    for ev in manage(cfg, rows_map):
+        if ev.get("event") == "CLOSED_TRAIL":
+            tg.alert_close(ev)
+        elif ev.get("event") == "CLOSE_FAIL":
+            tg.alert_system(f"close gagal {ev.get('coin')}: {ev.get('r')}")
+
+    # log + print + digest
+    os.makedirs("log", exist_ok=True)
+    json.dump({"scans": scans}, open("log/last_scan.json", "w"), indent=1)
+    print("\n".join(lines))
+    print("\n".join(pm_lines))
+    if opened:
+        print(f"OPENED: {[p['coin'] for p in opened]}")
+
+    if digest:
+        st = load_state()
+        if os.environ.get("LLM_API_KEY"):
+            report = generate(st, scans, pm_lines)
+        else:
+            report = "\n".join(lines + pm_lines)
+        tg.digest(st, report)
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--digest", action="store_true")
+    main(digest=ap.parse_args().digest)
