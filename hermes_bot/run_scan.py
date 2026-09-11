@@ -2,7 +2,7 @@
 Pipeline: config -> data -> regime -> signal -> risk -> exec -> trailing
 -> log -> digest (opsional). Polymarket = overlay laporan, bukan gate.
 """
-import argparse, json, os, sys, urllib.request
+import argparse, json, os, shutil, sys, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -30,6 +30,9 @@ if os.path.exists(ENV):
 def main(digest=False):
     cfg = yaml.safe_load(open("config.yaml"))
     assets = cfg["assets"]["d1_watchlist"]
+    # backup memori posisi — gratis tiap denyut, murah saat bencana
+    if os.path.exists("state/state.json"):
+        shutil.copy("state/state.json", "state/state.json.bak")
     state = load_state()
     rows_map, scans, lines = {}, [], []
 
