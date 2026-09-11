@@ -31,12 +31,25 @@ def hl_candles(coin, interval="1d", n=400, base="https://api.hyperliquid.xyz"):
 
 
 def okx_candles(inst, bar="1D", n=400):
+    """OKX history-candles dengan pagination via 'after' (cursor ts_ms).
+    3 halaman x 100 bar = 300 bar >= min_bars gate."""
     for base in ["https://www.okx.com", "https://aws.okx.com"]:
         try:
-            r = _get(f"{base}/api/v5/market/candles?instId={inst}&bar={bar}&limit=100")
-            rows = [(int(x[0]), float(x[1]), float(x[2]), float(x[3]),
-                     float(x[4]), float(x[5])) for x in r["data"]]
-            return sorted(rows)[-n:]
+            rows, after = [], None
+            for _ in range(3):
+                url = f"{base}/api/v5/market/history-candles?instId={inst}&bar={bar}&limit=100"
+                if after:
+                    url += f"&after={after}"
+                r = _get(url)
+                if not r.get("data"):
+                    break
+                rows += [(int(x[0]), float(x[1]), float(x[2]), float(x[3]),
+                          float(x[4]), float(x[5])) for x in r["data"]]
+                after = min(int(x[0]) for x in r["data"])
+                if len(r["data"]) < 100:
+                    break
+                time.sleep(0.2)
+            return sorted(set(rows))[-n:]
         except Exception:
             time.sleep(0.3)
     return []

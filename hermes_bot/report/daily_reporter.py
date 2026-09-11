@@ -1,5 +1,8 @@
 """HERMES report.daily_reporter — laporan harian via GLM dari RINGKASAN angka."""
+import datetime, os
 from .glm_client import chat
+
+DIGEST_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "log", "digests")
 
 SYSTEM = (
     "Kamu Reporter Hermes, bot trading kuantitatif. Fondasi: DON-D1 breakout 40d "
@@ -40,8 +43,22 @@ def build_summary(state, scans, pm_lines):
     ])
 
 
+def save_digest(text):
+    """Persistensi digest: Telegram mungkin mati, file tidak."""
+    try:
+        os.makedirs(DIGEST_DIR, exist_ok=True)
+        path = os.path.join(DIGEST_DIR, f"{datetime.date.today().isoformat()}.md")
+        with open(path, "w") as f:
+            f.write(text)
+        return path
+    except Exception:
+        return None
+
+
 def generate(state, scans, pm_lines):
     summary = build_summary(state, scans, pm_lines)
     out = chat([{"role": "system", "content": SYSTEM},
                 {"role": "user", "content": summary}])
-    return out or summary
+    text = out or summary
+    save_digest(text)
+    return text
