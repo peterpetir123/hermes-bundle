@@ -1,0 +1,51 @@
+{
+ "coin": "SOL",
+ "full": {
+  "n": 3,
+  "wr": 0.333,
+  "pf": 0.524,
+  "tot_r": -0.4,
+  "expectancy": -0.148,
+  "max_dd_r": 0.5,
+  "pass": false
+ },
+ "y3": {
+  "n": 3,
+  "wr": 0.333,
+  "pf": 0.524,
+  "tot_r": -0.4,
+  "expectancy": -0.148,
+  "max_dd_r": 0.5,
+  "pass": false
+ },
+ "n_trades_full": 3,
+ "trades_tail": [
+  {
+   "ts_in": 1778284800000,
+   "ts_out": 1778889600000,
+   "entry": 92.11642755,
+   "exit": 88.01905239,
+   "r": -0.5104,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1787184000000,
+   "ts_out": 1787356800000,
+   "entry": 85.4651148,
+   "exit": 89.135241,
+   "r": 0.4903,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1787875200000,
+   "ts_out": 1789171200000,
+   "entry": 109.263702,
+   "exit": 101.623366,
+   "r": -0.4251,
+   "bars": null,
+   "open_end": true
+  }
+ ]
+}

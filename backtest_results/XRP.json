@@ -1,0 +1,33 @@
+{
+ "coin": "XRP",
+ "full": {
+  "n": 1,
+  "wr": 0.0,
+  "pf": 0.0,
+  "tot_r": -0.1,
+  "expectancy": -0.059,
+  "max_dd_r": 0.1,
+  "pass": false
+ },
+ "y3": {
+  "n": 1,
+  "wr": 0.0,
+  "pf": 0.0,
+  "tot_r": -0.1,
+  "expectancy": -0.059,
+  "max_dd_r": 0.1,
+  "pass": false
+ },
+ "n_trades_full": 1,
+ "trades_tail": [
+  {
+   "ts_in": 1787270400000,
+   "ts_out": 1787270400000,
+   "entry": 1.26960498,
+   "exit": 1.26097094,
+   "r": -0.0595,
+   "bars": null,
+   "open_end": false
+  }
+ ]
+}

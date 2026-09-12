@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HERMES — Dashboard (local-only)</title>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--line:#21262d;--fg:#c9d1d9;--dim:#8b949e;
+--green:#3fb950;--red:#f85149;--amber:#d29922;--blue:#58a6ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 monospace;padding:16px}
+h1{font-size:16px;margin-bottom:12px}
+h1 .tag{color:var(--dim);font-size:11px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
+.card .lbl{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:1px}
+.card .val{font-size:22px;font-weight:bold;margin-top:4px}
+.pos{color:var(--green)}.neg{color:var(--red)}.na{color:var(--dim)}
+.sec{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:16px}
+.sec h2{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--dim);font-size:11px;font-weight:normal;text-transform:uppercase}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;border:1px solid var(--line)}
+.pill.testnet{color:var(--amber);border-color:var(--amber)}
+canvas{width:100%;height:320px;display:block}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+button{background:var(--panel);border:1px solid var(--line);color:var(--fg);
+padding:4px 12px;border-radius:6px;cursor:pointer;font:inherit}
+button.on{border-color:var(--blue);color:var(--blue)}
+.md{white-space:pre-wrap;font-size:12px;color:var(--dim);max-height:300px;overflow:auto}
+.status{color:var(--dim);font-size:11px;margin-top:4px}
+</style>
+</head>
+<body>
+<h1>HERMES <span class="tag">local-only · 127.0.0.1:8080 · mode <span class="pill testnet">TESTNET</span></span></h1>
+
+<div class="grid">
+  <div class="card"><div class="lbl">Saldo Demo</div><div class="val" id="equity">–</div></div>
+  <div class="card"><div class="lbl">Saldo Real</div><div class="val na">n/a</div></div>
+  <div class="card"><div class="lbl">Day PnL</div><div class="val" id="daypnl">–</div></div>
+  <div class="card"><div class="lbl">Mode</div><div class="val" style="font-size:16px" id="mode">TESTNET</div></div>
+</div>
+
+<div class="sec">
+  <h2>Posisi Terbuka</h2>
+  <table id="posTable"><thead><tr><th>Koin</th><th>Entry</th><th>SL</th><th>PnL</th></tr></thead>
+  <tbody><tr><td colspan="4" class="na">memuat…</td></tr></tbody></table>
+</div>
+
+<div class="sec">
+  <div class="row" id="coinBtns"></div>
+  <h2>Chart D1 <span id="coinLbl"></span></h2>
+  <canvas id="chart" width="1200" height="320"></canvas>
+  <div class="status" id="chartStatus"></div>
+</div>
+
+<div class="sec">
+  <h2>Backtest <span id="btCoinLbl"></span></h2>
+  <table id="btTable"><thead><tr><th>Window</th><th>n</th><th>WR</th><th>PF</th><th>totR</th><th>maxDD</th><th>MC p95</th><th>Gerbang</th></tr></thead>
+  <tbody><tr><td colspan="8" class="na">–</td></tr></tbody></table>
+</div>
+
+<div class="sec">
+  <h2>MIND / SESSION-LOG</h2>
+  <div class="md" id="mind">memuat…</div>
+</div>
+
+<div class="status" id="refresh">auto-refresh 30s</div>
+
+<script>
+"use strict";
+var COINS=["BTC","ETH","SOL","XRP","DOGE"], CUR="BTC";
+function $id(x){return document.getElementById(x)}
+function fmt(x,d){return (x===null||x===undefined)?"–":Number(x).toFixed(d===undefined?2:d)}
+function cls(v){return v>0?"pos":(v<0?"neg":"na")}
+
+function loadState(){
+  fetch("/api/state").then(function(r){return r.json()}).then(function(s){
+    $id("equity").textContent="$"+fmt(s.equity);
+    $id("daypnl").textContent=fmt(s.day_pnl);
+    $id("daypnl").className="val "+cls(s.day_pnl);
+    $id("mode").textContent=(s.stage==="A"?"TESTNET (Tahap A)":"MODE "+s.stage);
+    var tb=$id("posTable").tBodies[0]; tb.innerHTML="";
+    if(!s.positions||!s.positions.length){
+      tb.innerHTML='<tr><td colspan="4" class="na">tidak ada posisi terbuka</td></tr>';
+    } else {
+      s.positions.forEach(function(p){
+        var tr=document.createElement("tr");
+        tr.innerHTML="<td>"+p.coin+"</td><td>"+fmt(p.entry,4)+"</td><td>"+
+          fmt(p.sl,4)+"</td><td class='"+cls(p.pnl)+"'>"+fmt(p.pnl)+"</td>";
+        tb.appendChild(tr);
+      });
+    }
+  }).catch(function(){$id("equity").textContent="ERR"});
+}
+
+function loadScan(){
+  fetch("/api/scan").then(function(r){return r.json()}).then(function(sc){
+    var rows=(sc&&sc.scans)||[];
+    var tb=$id("posTable"); // sinyal STANDING tampil sebagai info di bawah posisi
+    rows.forEach(function(s){
+      if(s.status==="STANDING"||s.status==="TRIGGER"){
+        var tr=document.createElement("tr");
+        tr.innerHTML="<td>"+s.coin+" <span class='pill'>"+s.status+"</span></td><td>"+
+          fmt(s.trigger,6)+"</td><td class='na'>–</td><td class='na'>sinyal</td>";
+        tb.tBodies[0].appendChild(tr);
+      }
+    });
+  }).catch(function(){});
+}
+
+function drawChart(rows){
+  var c=$id("chart"),ctx=c.getContext("2d");
+  ctx.clearRect(0,0,c.width,c.height);
+  if(!rows||!rows.length){$id("chartStatus").textContent="tidak ada data";return}
+  var W=c.width,H=c.height,PAD=10;
+  var hi=-Infinity,lo=Infinity;
+  rows.forEach(function(b){hi=Math.max(hi,b[2]);lo=Math.min(lo,b[3])});
+  var span=(hi-lo)||1;
+  var x=function(i){return PAD+(W-2*PAD)*i/(rows.length-1||1)};
+  var y=function(p){return H-PAD-(H-2*PAD)*(p-lo)/span};
+  // grid
+  ctx.strokeStyle="#21262d";ctx.beginPath();
+  for(var g=0;g<=4;g++){var gy=PAD+(H-2*PAD)*g/4;ctx.moveTo(PAD,gy);ctx.lineTo(W-PAD,gy)}
+  ctx.stroke();
+  var bw=Math.max(1,(W-2*PAD)/rows.length*0.6);
+  rows.forEach(function(b,i){
+    var up=b[4]>=b[1],col=up?"#3fb950":"#f85149";
+    ctx.strokeStyle=col;ctx.fillStyle=col;
+    // wick
+    ctx.beginPath();ctx.moveTo(x(i),y(b[2]));ctx.lineTo(x(i),y(b[3]));ctx.stroke();
+    // body
+    var y1=y(Math.max(b[1],b[4])),y2=y(Math.min(b[1],b[4]));
+    ctx.fillRect(x(i)-bw/2,y1,bw,Math.max(1,y2-y1));
+  });
+  $id("chartStatus").textContent=rows.length+" bar · lo "+lo.toPrecision(6)+" · hi "+hi.toPrecision(6);
+}
+
+function loadCandles(coin){
+  $id("coinLbl").textContent="— "+coin;
+  fetch("/api/candles?coin="+coin).then(function(r){return r.json()}).then(function(d){
+    drawChart(Array.isArray(d)?d:[]);
+  }).catch(function(){drawChart([])});
+}
+
+function loadBacktest(coin){
+  $id("btCoinLbl").textContent="— "+coin;
+  fetch("/api/backtest?coin="+coin).then(function(r){return r.json()}).then(function(d){
+    var tb=$id("btTable").tBodies[0]; tb.innerHTML="";
+    if(d.error){tb.innerHTML='<tr><td colspan="8" class="na">'+d.error+'</td></tr>';return}
+    [["9y penuh",d.full],["3y terakhir",d.y3]].forEach(function(w){
+      var m=w[1],tr=document.createElement("tr");
+      if(!m||!m.n){tr.innerHTML='<td>'+w[0]+'</td><td colspan="7" class="na">–</td>'}
+      else{
+        tr.innerHTML="<td>"+w[0]+"</td><td>"+m.n+"</td><td>"+fmt(m.wr*100,1)+"%</td><td>"+
+          fmt(m.pf,2)+"</td><td class='"+cls(m.tot_r)+"'>"+fmt(m.tot_r,1)+"</td><td>"+
+          fmt(m.max_dd_r,1)+"</td><td>"+fmt(m.mc_p95,1)+"</td><td class='"+(m.pass?"pos":"neg")+"'>"+
+          (m.pass?"PASS":"FAIL")+"</td>";
+      }
+      tb.appendChild(tr);
+    });
+  }).catch(function(){});
+}
+
+function loadMind(){
+  fetch("/api/mind").then(function(r){return r.text()}).then(function(t){
+    $id("mind").textContent=t;
+  }).catch(function(){$id("mind").textContent="gagal memuat"});
+}
+
+function refresh(){
+  loadState(); loadScan(); loadCandles(CUR); loadBacktest(CUR); loadMind();
+}
+
+(function init(){
+  var box=$id("coinBtns");
+  COINS.forEach(function(cn){
+    var b=document.createElement("button");
+    b.textContent=cn;
+    b.onclick=function(){
+      CUR=cn;
+      [].forEach.call(box.children,function(x){x.className=""});
+      b.className="on";
+      loadCandles(cn); loadBacktest(cn);
+    };
+    if(cn===CUR)b.className="on";
+    box.appendChild(b);
+  });
+  refresh();
+  setInterval(refresh,30000); // auto-refresh via fetch, bukan reload
+})();
+</script>
+</body>
+</html>

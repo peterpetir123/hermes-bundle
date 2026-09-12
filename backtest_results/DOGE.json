@@ -1,0 +1,33 @@
+{
+ "coin": "DOGE",
+ "full": {
+  "n": 1,
+  "wr": 0.0,
+  "pf": 0.0,
+  "tot_r": -0.7,
+  "expectancy": -0.68,
+  "max_dd_r": 0.7,
+  "pass": false
+ },
+ "y3": {
+  "n": 1,
+  "wr": 0.0,
+  "pf": 0.0,
+  "tot_r": -0.7,
+  "expectancy": -0.68,
+  "max_dd_r": 0.7,
+  "pass": false
+ },
+ "n_trades_full": 1,
+ "trades_tail": [
+  {
+   "ts_in": 1787356800000,
+   "ts_out": 1787356800000,
+   "entry": 0.09173507,
+   "exit": 0.08461879,
+   "r": -0.6803,
+   "bars": null,
+   "open_end": false
+  }
+ ]
+}

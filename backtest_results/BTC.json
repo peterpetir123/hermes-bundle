@@ -1,0 +1,33 @@
+{
+ "coin": "BTC",
+ "full": {
+  "n": 1,
+  "wr": 1.0,
+  "pf": Infinity,
+  "tot_r": 1.9,
+  "expectancy": 1.872,
+  "max_dd_r": 0.0,
+  "pass": false
+ },
+ "y3": {
+  "n": 1,
+  "wr": 1.0,
+  "pf": Infinity,
+  "tot_r": 1.9,
+  "expectancy": 1.872,
+  "max_dd_r": 0.0,
+  "pass": false
+ },
+ "n_trades_full": 1,
+ "trades_tail": [
+  {
+   "ts_in": 1787184000000,
+   "ts_out": 1789171200000,
+   "entry": 69388.85685,
+   "exit": 77188.6011,
+   "r": 1.8721,
+   "bars": null,
+   "open_end": true
+  }
+ ]
+}
