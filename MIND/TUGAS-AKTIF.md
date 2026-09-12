@@ -4,7 +4,25 @@
 > verbatim sebelum lanjut. Setelah selesai (atau mentok): append
 > MIND/SESSION-LOG.md, commit + push. Hapus file ini saat SEMUA fase selesai.
 
-=== FASE 0: SINKRON ===
+=== FASE 3-LANJUTAN (keputusan Nahkoda 2026-09-12) ===
+Keputusan Nahkoda atas laporan Fase 3-mu:
+1. Patch data.py + run_backtest.py SUDAH di-push upstream (commit afc00f7):
+   hl_candles kini startTime-paging (401 -> ~2.217 bar), full-window
+   kini benar-benar 3.400 bar (bug lama: cuma 400), label "9y" -> "full".
+2. 9 tahun penuh TIDAK tersedia dari HL (maks ~6 thn). Opsi provider
+   eksternal DITOLAK Nahkoda (YAGNI) — FULL = maks historis venue.
+3. Tugasmu sekarang:
+   a. cd ~/hermes-bundle && git pull  (dapat afc00f7)
+   b. ./hermes-env/bin/python -m hermes_bot.backtest.run_backtest --all
+   c. Commit + push backtest_results/ baru + append MIND/SESSION-LOG.md
+      (hasil verbatim + catatan bahwa akar masalah = bug upstream, bukan
+      engine/strategi — engine dan config TIDAK diubah).
+   d. JANGAN hapus TUGAS-AKTIF.md — Nahkoda akan menilai SUMMARY.md dulu.
+   e. DILARANG menafsirkan hasil sebagai dasar ubah sizing/watchlist.
+      Angka kecil n (9-13) = wajar utk 5 aset D1 6 thn; keputusan
+      interpretasi gerbang = Nahkoda.
+
+=== FASE 0: SINKRON (SELESAI 2026-09-12) ===
 1. cd ~/hermes-bundle && git pull
 2. Verifikasi minimal 3 commit terbaru hadir: 88c76ee (OKX pagination +
    digest persist), a577c15 (hardening), f805b59 (backtest + MIND/).
