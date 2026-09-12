@@ -1,25 +1,135 @@
 {
  "coin": "XRP",
  "full": {
-  "n": 1,
-  "wr": 0.0,
-  "pf": 0.0,
-  "tot_r": -0.1,
-  "expectancy": -0.059,
-  "max_dd_r": 0.1,
-  "pass": false
+  "n": 13,
+  "wr": 0.231,
+  "pf": 0.563,
+  "tot_r": -3.2,
+  "expectancy": -0.248,
+  "max_dd_r": 3.7,
+  "pass": false,
+  "mc_p95": 6.9
  },
  "y3": {
-  "n": 1,
-  "wr": 0.0,
-  "pf": 0.0,
-  "tot_r": -0.1,
-  "expectancy": -0.059,
-  "max_dd_r": 0.1,
-  "pass": false
+  "n": 13,
+  "wr": 0.231,
+  "pf": 0.563,
+  "tot_r": -3.2,
+  "expectancy": -0.248,
+  "max_dd_r": 3.7,
+  "pass": false,
+  "mc_p95": 6.9
  },
- "n_trades_full": 1,
+ "n_trades_full": 13,
  "trades_tail": [
+  {
+   "ts_in": 1699315200000,
+   "ts_out": 1699920000000,
+   "entry": 0.71549908,
+   "exit": 0.61777464,
+   "r": -1.006,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1709078400000,
+   "ts_out": 1709078400000,
+   "entry": 0.58711723,
+   "exit": 0.5153382,
+   "r": -1.0069,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1709424000000,
+   "ts_out": 1711929600000,
+   "entry": 0.64572285,
+   "exit": 0.61589684,
+   "r": -0.2356,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1721174400000,
+   "ts_out": 1722729600000,
+   "entry": 0.57980029,
+   "exit": 0.53258606,
+   "r": -0.4601,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1727654400000,
+   "ts_out": 1727827200000,
+   "entry": 0.64244975,
+   "exit": 0.57049526,
+   "r": -1.0076,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1731456000000,
+   "ts_out": 1731715200000,
+   "entry": 0.70575984,
+   "exit": 0.95475962,
+   "r": 2.3664,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1732320000000,
+   "ts_out": 1733702400000,
+   "entry": 1.47630116,
+   "exit": 2.04060958,
+   "r": 1.3155,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1736985600000,
+   "ts_out": 1737936000000,
+   "entry": 3.14918889,
+   "exit": 2.66049513,
+   "r": -0.8813,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1747094400000,
+   "ts_out": 1748390400000,
+   "entry": 2.54901927,
+   "exit": 2.25687893,
+   "r": -0.8181,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1752105600000,
+   "ts_out": 1752192000000,
+   "entry": 2.40708456,
+   "exit": 2.54310675,
+   "r": 0.484,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1752796800000,
+   "ts_out": 1754006400000,
+   "entry": 3.48881123,
+   "exit": 2.96820253,
+   "r": -0.9115,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1767657600000,
+   "ts_out": 1767830400000,
+   "entry": 2.34872917,
+   "exit": 2.10509843,
+   "r": -1.0083,
+   "bars": null,
+   "open_end": false
+  },
   {
    "ts_in": 1787270400000,
    "ts_out": 1787270400000,

@@ -1,25 +1,79 @@
 {
  "coin": "SOL",
  "full": {
-  "n": 3,
+  "n": 9,
   "wr": 0.333,
-  "pf": 0.524,
-  "tot_r": -0.4,
-  "expectancy": -0.148,
-  "max_dd_r": 0.5,
+  "pf": 5.085,
+  "tot_r": 10.4,
+  "expectancy": 1.15,
+  "max_dd_r": 1.8,
   "pass": false
  },
  "y3": {
-  "n": 3,
+  "n": 9,
   "wr": 0.333,
-  "pf": 0.524,
-  "tot_r": -0.4,
-  "expectancy": -0.148,
-  "max_dd_r": 0.5,
+  "pf": 5.085,
+  "tot_r": 10.4,
+  "expectancy": 1.15,
+  "max_dd_r": 1.8,
   "pass": false
  },
- "n_trades_full": 3,
+ "n_trades_full": 9,
  "trades_tail": [
+  {
+   "ts_in": 1698105600000,
+   "ts_out": 1704240000000,
+   "entry": 31.9763487,
+   "exit": 92.91739454,
+   "r": 11.6107,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1710547200000,
+   "ts_out": 1712620800000,
+   "entry": 184.455066,
+   "exit": 170.29306775,
+   "r": -0.3207,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1730937600000,
+   "ts_out": 1733702400000,
+   "entry": 186.917403,
+   "exit": 212.02588388,
+   "r": 0.7878,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1737244800000,
+   "ts_out": 1737936000000,
+   "entry": 262.4791185,
+   "exit": 225.3157465,
+   "r": -0.7565,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1746748800000,
+   "ts_out": 1748563200000,
+   "entry": 164.7663795,
+   "exit": 155.432199,
+   "r": -0.4725,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1752710400000,
+   "ts_out": 1753833600000,
+   "entry": 174.005148,
+   "exit": 172.91807162,
+   "r": -0.0496,
+   "bars": null,
+   "open_end": false
+  },
   {
    "ts_in": 1778284800000,
    "ts_out": 1778889600000,

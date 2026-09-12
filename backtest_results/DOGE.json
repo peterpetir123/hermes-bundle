@@ -1,25 +1,117 @@
 {
  "coin": "DOGE",
  "full": {
-  "n": 1,
-  "wr": 0.0,
-  "pf": 0.0,
-  "tot_r": -0.7,
-  "expectancy": -0.68,
-  "max_dd_r": 0.7,
-  "pass": false
+  "n": 11,
+  "wr": 0.273,
+  "pf": 3.825,
+  "tot_r": 10.1,
+  "expectancy": 0.922,
+  "max_dd_r": 1.8,
+  "pass": false,
+  "mc_p95": 3.6
  },
  "y3": {
-  "n": 1,
-  "wr": 0.0,
-  "pf": 0.0,
-  "tot_r": -0.7,
-  "expectancy": -0.68,
-  "max_dd_r": 0.7,
-  "pass": false
+  "n": 10,
+  "wr": 0.3,
+  "pf": 4.495,
+  "tot_r": 10.7,
+  "expectancy": 1.068,
+  "max_dd_r": 1.8,
+  "pass": false,
+  "mc_p95": 3.0
  },
- "n_trades_full": 1,
+ "n_trades_full": 11,
  "trades_tail": [
+  {
+   "ts_in": 1690329600000,
+   "ts_out": 1692057600000,
+   "entry": 0.08182866,
+   "exit": 0.07334576,
+   "r": -0.5356,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1698105600000,
+   "ts_out": 1702425600000,
+   "entry": 0.06756212,
+   "exit": 0.09053766,
+   "r": 4.3688,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1709078400000,
+   "ts_out": 1709078400000,
+   "entry": 0.09808009,
+   "exit": 0.09456183,
+   "r": -0.233,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1709510400000,
+   "ts_out": 1709596800000,
+   "entry": 0.15462676,
+   "exit": 0.12783769,
+   "r": -0.5307,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1727395200000,
+   "ts_out": 1727740800000,
+   "entry": 0.11833231,
+   "exit": 0.11034932,
+   "r": -0.509,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1729382400000,
+   "ts_out": 1734480000000,
+   "entry": 0.14438704,
+   "exit": 0.35131593,
+   "r": 9.354,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1746835200000,
+   "ts_out": 1746835200000,
+   "entry": 0.20565519,
+   "exit": 0.20588922,
+   "r": 0.0075,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1752883200000,
+   "ts_out": 1753747200000,
+   "entry": 0.23620418,
+   "exit": 0.21819002,
+   "r": -0.3812,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1757721600000,
+   "ts_out": 1758499200000,
+   "entry": 0.27606201,
+   "exit": 0.25594662,
+   "r": -0.5318,
+   "bars": null,
+   "open_end": false
+  },
+  {
+   "ts_in": 1777507200000,
+   "ts_out": 1779062400000,
+   "entry": 0.10425895,
+   "exit": 0.10189061,
+   "r": -0.1883,
+   "bars": null,
+   "open_end": false
+  },
   {
    "ts_in": 1787356800000,
    "ts_out": 1787356800000,
