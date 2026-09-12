@@ -14,7 +14,10 @@ from urllib.parse import urlparse, parse_qs
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.chdir(ROOT)
-BIND, PORT = "127.0.0.1", 8080
+# Default TIDAK BERUBAH: 127.0.0.1:8080 (keputusan terkunci local-only).
+# Override hanya via env (dipakai unit hermes-web-public, dilindungi iptables).
+BIND = os.environ.get("HERMES_WEB_BIND", "127.0.0.1")
+PORT = int(os.environ.get("HERMES_WEB_PORT", "8080"))
 
 
 def read_json(path):
