@@ -18,7 +18,8 @@ RESULTS = "backtest_results"
 
 
 def one_coin(coin, cfg, years):
-    bars = (cfg["data"]["min_bars"] + 100) if years == 0 else min(365 * years + 300, 3400)
+    # years=0 = FULL window (maks historis HL ~6 thn); lainnya = tahun terakhir
+    bars = 3400 if years == 0 else min(365 * years + 300, 3400)
     rows = fetch(coin, "1d", "1D", bars)
     if len(rows) < 300:
         return {"error": f"NO_DATA ({len(rows)} bar)"}
@@ -57,13 +58,14 @@ def main():
             print(f"{c}: {r['error']}")
             table[c] = {"9y": None, "3y": None}
             continue
-        table[c] = {"9y": r["full"], "3y": r["y3"]}
+        table[c] = {"full": r["full"], "3y": r["y3"]}
         g = lambda m: (m.get("n", 0), m.get("pf", "-"), m.get("tot_r", "-"))
         n9, pf9, r9 = g(r["full"])
         n3, pf3, r3 = g(r["y3"])
-        print(f"{c}: 9y n={n9} PF={pf9} totR={r9} | 3y n={n3} PF={pf3} totR={r3}")
+        print(f"{c}: full n={n9} PF={pf9} totR={r9} | 3y n={n3} PF={pf3} totR={r3}")
     md = ["# SUMMARY Backtest DON-D1 (biaya: fee 0.045% + slippage 0.05%/sisi)",
           f"Dibuat: {datetime.date.today().isoformat()} | gerbang: n>=100, PF>=1.1, totR>0",
+          "Window FULL = maks historis per venue (HL ~6 thn, bukan 9 thn riset awal).",
           "", pass_fail_table(table), ""]
     os.makedirs(RESULTS, exist_ok=True)
     with open(f"{RESULTS}/SUMMARY.md", "w") as f:

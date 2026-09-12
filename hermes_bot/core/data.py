@@ -20,12 +20,24 @@ def _post(url, body, timeout=15):
 
 
 def hl_candles(coin, interval="1d", n=400, base="https://api.hyperliquid.xyz"):
+    """HL candleSnapshot + startTime paging (API kini wajib/membatasi form
+    tanpa startTime). Live tetap dapat n bar terakhir; backtest minta lebih."""
     try:
-        r = _post(f"{base}/info", {"type": "candleSnapshot",
-                                   "req": {"coin": coin, "interval": interval}})
-        rows = [(int(c["t"]), float(c["o"]), float(c["h"]), float(c["l"]),
-                 float(c["c"]), float(c["v"])) for c in r]
-        return sorted(rows)[-n:]
+        rows, start = [], int(time.time() * 1000) - max(n, 400) * 86_400_000 * 2
+        for _ in range(40):
+            r = _post(f"{base}/info",
+                      {"type": "candleSnapshot",
+                       "req": {"coin": coin, "interval": interval, "startTime": start}})
+            if not r:
+                break
+            new = [(int(c["t"]), float(c["o"]), float(c["h"]), float(c["l"]),
+                    float(c["c"]), float(c["v"])) for c in r]
+            rows += new
+            last_t = max(x[0] for x in new)
+            if last_t <= start:      # API diam / tidak maju -> selesai
+                break
+            start = last_t + 1
+        return sorted(set(rows))[-n:]
     except Exception:
         return []
 
