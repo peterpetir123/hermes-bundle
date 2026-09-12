@@ -3,6 +3,12 @@
 > Aturan: SETIAKAR akhir sesi, append entri baru di ATAS, lalu commit+push.
 > Format: tanggal | apa yang dikerjakan | keputusan+alasan | bukti verifikasi.
 
+## 2026-09-12 — Opsi A Nahkoda: dashboard dibuka terbatas ke IP rumah (by-request) (oleh Hermes)
+- Apa: SSH password dari IP Nahkoda (180.247.60.170) sebenarnya BERHASIL di auth.log tapi tunnel tetap tak terpakai — Nahkoda pilih Opsi A: listener kedua di 0.0.0.0:8080 via unit `hermes-web-public` (Environment HERMES_WEB_BIND), dilindungi iptables chain `HERMES-WEB` (allow 127.0.0.1 + 180.247.60.170, DROP sisanya). Rules disimpan /etc/iptables/rules.v4 + unit oneshot `hermes-iptables-restore.service` enabled untuk persist reboot. server.py default TETAP 127.0.0.1 (commit ea27e4f->eb267e8).
+- Keputusan: ini pembukaan sementara atas keputusan "local-only" atas permintaan eksplisit Nahkoda; unit lama hermes-web (127.0.0.1) di-disable dan digantikan instance publik yang sama isinya. Pembatalan = `systemctl --user stop --now hermes-web-public` + `iptables -D INPUT -p tcp --dport 8080 -m conntrack --ctstate NEW -j HERMES-WEB`.
+- Alasan: Nahkoda tak bisa akses via tunnel; firewall allowlist membatasi permukaan serangan ke 1 IP.
+- Verifikasi: `ss -tlnp` -> 0.0.0.0:8080 (pid python); `curl 127.0.0.1:8080/` -> 200; iptables HERMES-WEB = [accept loopback, accept 180.247.60.170, drop all]. Akses dari browser Nahkoda: http://156.67.24.112:8080 — CATATAN: verifikasi dari luar VPS belum bisa dilakukan dari dalam (hairpin NAT 000), perlu konfirmasi Nahkoda.
+
 ## 2026-09-12 — Fase 3-lanjutan dieksekusi (patch upstream afc00f7 dipakai apa adanya) (oleh Hermes)
 - Apa: git pull -> afc00f7 + ac113f5 hadir. Baca ulang TUGAS-AKTIF "FASE 3-LANJUTAN". Jalankan `run_backtest --all` dengan data.py hasil patch Nahkoda (startTime-paging). Hasil masuk backtest_results/ (5 JSON + SUMMARY.md). Engine, config, sizing, watchlist, dashboard: TIDAK disentuh.
 - Keputusan: report-only sesuai instruksi — TIDAK menafsirkan hasil sebagai dasar ubah sizing/watchlist; TUGAS-AKTIF.md TIDAK dihapus (Nahkoda akan menilai SUMMARY.md dulu). Akar masalah hasil lama (n=1..3) = bug upstream data.py, bukan engine/strategi.
