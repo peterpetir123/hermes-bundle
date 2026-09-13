@@ -1,3 +1,9 @@
+## 2026-09-12 — Opsi A DITUTUP: VPS di belakang NAT provider, port publik tak tersedia (oleh Hermes)
+- Apa: Diagnostik akhir — VPS hanya pegang IP privat 10.60.107.202; 156.67.24.112 = gateway provider Helipod yang memetakan SEBAGIAN port saja (22, 80, 443, dan 49500->22 terbukti; 8080/8888/49501 refused di gateway, dibuktikan via check-host.net dari 3 node + probe listener lokal). Artinya dashboard di 0.0.0.0:8080 TIDAK AKAN PERNAH terjangkau dari luar di arsitektur ini, apa pun iptables-nya.
+- Keputusan: opsi A (allowlist IP) dihentikan karena tujuan tak tercapai; rules iptables HERMES-WEB dipertahankan (tak berbahaya) tapi akses Nahkoda kembali via SSH tunnel: `ssh -N -L 8080:127.0.0.1:8080 root@156.67.24.112 -p 49500` lalu browser http://127.0.0.1:8080. Unit hermes-web-public tetap jalan (dipakai tunnel juga bisa; bind 0.0.0.0 tak terjangkau luar).
+- Alasan: provider tidak menyewakan port publik tambahan; satu-satunya jalur masuk yang terbukti hidup = SSH di port 49500.
+- Verbatim bukti: check-host 80/443 = {"time":0.115,"address":"156.67.24.112"} OK; 8080 = {"error":"Connection refused"}; 49501 = refused/timeout; probe listener lokal 49501 = tak ada koneksi datang; sshd auth = "Accepted password for root from 180.252.118.92" via -p 49500.
+
 # SESSION-LOG Hermes — Memori Antar-Sesi
 
 > Aturan: SETIAKAR akhir sesi, append entri baru di ATAS, lalu commit+push.
