@@ -6,6 +6,7 @@ PY="$DIR/hermes-env/bin/python"
 CRON_FILE="/tmp/hermes_cron_$USER"
 printf '%s\n' \
 "5 * * * * cd $DIR && $PY -m hermes_bot.run_scan >> log/cron.log 2>&1" \
+"10,40 * * * * cd $DIR && $PY -m hermes_bot.run_scan --monitor >> log/cron.log 2>&1" \
 "15 0 * * * cd $DIR && $PY -m hermes_bot.run_scan --digest >> log/cron.log 2>&1" \
 "*/30 * * * * cd $DIR && $PY -m hermes_bot.watchdog >> log/cron.log 2>&1" \
 > "$CRON_FILE"

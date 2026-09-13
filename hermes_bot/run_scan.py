@@ -27,8 +27,31 @@ if os.path.exists(ENV):
             os.environ.setdefault(k.strip(), v.strip())
 
 
+def monitor(cfg):
+    """Cek posisi terbuka TANPA LLM (0 token): fetch hanya koin berposisi,
+    jalankan manage() (trailing + close saat SL tersapu), alert event."""
+    state = load_state()
+    if not state["positions"]:
+        print("monitor: no open positions")
+        return
+    coins = sorted({p["coin"] for p in state["positions"]})
+    rows_map = {c: fetch(c, "1d", "1D", cfg["data"]["min_bars"] + 100)
+                for c in coins}
+    n_ev = 0
+    for ev in manage(cfg, rows_map):
+        n_ev += 1
+        if ev.get("event") == "CLOSED_TRAIL":
+            tg.alert_close(ev)
+        elif ev.get("event") == "CLOSE_FAIL":
+            tg.alert_system(f"close gagal {ev.get('coin')}: {ev.get('r')}")
+    print(f"monitor: {len(coins)} posisi dicek ({', '.join(coins)}), {n_ev} event")
+
+
 def main(digest=False):
     cfg = yaml.safe_load(open("config.yaml"))
+    if "--monitor" in sys.argv:
+        monitor(cfg)
+        return
     assets = cfg["assets"]["d1_watchlist"]
     # backup memori posisi — gratis tiap denyut, murah saat bencana
     if os.path.exists("state/state.json"):
@@ -99,4 +122,5 @@ def main(digest=False):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--digest", action="store_true")
+    ap.add_argument("--monitor", action="store_true")
     main(digest=ap.parse_args().digest)
