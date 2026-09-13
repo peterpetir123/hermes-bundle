@@ -50,6 +50,17 @@ button.on{border-color:var(--blue);color:var(--blue)}
 </div>
 
 <div class="sec">
+  <h2>Portofolio — Kurva Equity <span class="na">(demo + real)</span></h2>
+  <div class="row">
+    <button class="on" id="btDemo">DEMO</button>
+    <button id="btReal">REAL</button>
+    <button id="btBoth" class="">KEDUANYA</button>
+  </div>
+  <canvas id="eqChart" width="1200" height="260"></canvas>
+  <div class="status" id="eqStatus"></div>
+</div>
+
+<div class="sec">
   <div class="row" id="coinBtns"></div>
   <h2>Chart D1 <span id="coinLbl"></span></h2>
   <canvas id="chart" width="1200" height="320"></canvas>
@@ -145,6 +156,69 @@ function loadCandles(coin){
   }).catch(function(){drawChart([])});
 }
 
+// ====== KURVA EQUITY (porto demo + real) ======
+var EQDATA={demo:[],real:[]}, EQVIEW="demo";
+function drawEquity(){
+  var c=$id("eqChart"),ctx=c.getContext("2d");
+  ctx.clearRect(0,0,c.width,c.height);
+  var W=c.width,H=c.height,PAD=30;
+  var series=[];
+  if(EQVIEW==="demo")series.push(["demo",EQDATA.demo,"#58a6ff"]);
+  else if(EQVIEW==="real")series.push(["real",EQDATA.real,"#d29922"]);
+  else{series.push(["demo",EQDATA.demo,"#58a6ff"],["real",EQDATA.real,"#d29922"])}
+  // kumpulkan titik valid
+  var all=[];
+  series.forEach(function(s){
+    s[1]=(s[1]||[]).filter(function(pt){return pt.equity!==null&&pt.equity!==undefined});
+    s[1].forEach(function(pt){all.push(pt.equity)});
+  });
+  if(!all.length){$id("eqStatus").textContent="belum ada data";return}
+  var hi=Math.max.apply(null,all),lo=Math.min.apply(null,all);
+  var span=(hi-lo)||Math.abs(hi)||1; span*=0.1;
+  var y=function(p){return H-PAD-((H-2*PAD)*(p-lo))/(hi-lo+span*2)};
+  var nmax=Math.max.apply(null,series.map(function(s){return s[1].length||1}));
+  // grid + label
+  ctx.strokeStyle="#21262d";ctx.fillStyle="#8b949e";ctx.font="10px monospace";ctx.beginPath();
+  for(var g=0;g<=4;g++){var gy=PAD+(H-2*PAD)*g/4;ctx.moveTo(PAD,gy);ctx.lineTo(W-PAD,gy);
+    ctx.fillText("$"+(hi+(lo-hi)*g/4+ (span*g/4)).toFixed(2),2,gy+3)}
+  ctx.stroke();
+  // garis modal awal $20
+  var y20=y(20);
+  ctx.strokeStyle="#30363d";ctx.setLineDash([4,4]);ctx.beginPath();
+  ctx.moveTo(PAD,y20);ctx.lineTo(W-PAD,y20);ctx.stroke();ctx.setLineDash([]);
+  series.forEach(function(s){
+    if(s[1].length<1)return;
+    ctx.strokeStyle=s[2];ctx.lineWidth=2;ctx.beginPath();
+    s[1].forEach(function(pt,i){
+      var px=PAD+(W-2*PAD)*i/(nmax-1||1);
+      if(i===0)ctx.moveTo(px,y(pt.equity));else ctx.lineTo(px,y(pt.equity));
+    });
+    ctx.stroke();ctx.lineWidth=1;
+  });
+  var st="DEMO: $"+fmt((EQDATA.demo||[]).slice(-1)[0]?.equity);
+  if(EQDATA.real&&EQDATA.real.some(function(pt){return pt.equity!==null})){
+    st+=" · REAL: $"+fmt((EQDATA.real||[]).slice(-1)[0]?.equity);
+  } else st+=" · REAL: n/a (Tahap A)";
+  st+=" · "+(EQDATA.demo.length-2)+" trade demo terekam";
+  $id("eqStatus").textContent=st;
+}
+function loadEquity(){
+  fetch("/api/equity").then(function(r){return r.json()}).then(function(d){
+    EQDATA=d; drawEquity();
+  }).catch(function(){});
+}
+function bindEqBtns(){
+  [["btDemo","demo"],["btReal","real"],["btBoth","both"]].forEach(function(b){
+    var el=$id(b[0]);
+    el.onclick=function(){
+      EQVIEW=b[1];
+      ["btDemo","btReal","btBoth"].forEach(function(x){$id(x).className=""});
+      el.className="on";
+      drawEquity();
+    };
+  });
+}
+
 function loadBacktest(coin){
   $id("btCoinLbl").textContent="— "+coin;
   fetch("/api/backtest?coin="+coin).then(function(r){return r.json()}).then(function(d){
@@ -171,10 +245,11 @@ function loadMind(){
 }
 
 function refresh(){
-  loadState(); loadScan(); loadCandles(CUR); loadBacktest(CUR); loadMind();
+  loadState(); loadScan(); loadCandles(CUR); loadBacktest(CUR); loadMind(); loadEquity();
 }
 
 (function init(){
+  bindEqBtns();
   var box=$id("coinBtns");
   COINS.forEach(function(cn){
     var b=document.createElement("button");

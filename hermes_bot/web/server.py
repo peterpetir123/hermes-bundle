@@ -39,6 +39,40 @@ def safe_coin(raw):
     return "".join(c for c in (raw or "").upper() if c.isalnum())[:12]
 
 
+def equity_history():
+    """Kurva equity per jalur (demo/real) dari log/trades.jsonl.
+    Setiap OPEN/CLOSE dicatat mode-nya; CLOSE mengubah equity (hl_exec).
+    Real = n/a di Tahap A (saldo_real null) tapi kurvanya disiapkan supaya
+    begitu Tahap B aktif, grafik real langsung terisi tanpa deploy ulang."""
+    out = {"demo": [{"ts": None, "equity": 20.0}], "real": [{"ts": None, "equity": None}]}
+    st = read_json("state/state.json")
+    if "error" not in st:
+        out["demo"] = [{"ts": None, "equity": 20.0}]
+    demo = 20.0
+    real = None
+    p = "log/trades.jsonl"
+    if os.path.exists(p):
+        for line in open(p, errors="replace"):
+            try:
+                e = json.loads(line)
+            except Exception:
+                continue
+            mode = e.get("mode", "testnet")
+            ts = e.get("closed") or e.get("opened")
+            if e.get("event") == "CLOSE":
+                gross = (e["exit"] - e["entry"]) * (e.get("notional", 0) / e["entry"]) \
+                    if e.get("notional") else 0.0
+                if mode == "live":
+                    real = round((real or 0.0) + gross, 4)
+                    out["real"].append({"ts": ts, "equity": real})
+                else:
+                    demo = round(demo + gross, 4)
+                    out["demo"].append({"ts": ts, "equity": demo})
+    # titik terakhir = kondisi state.json saat ini (menyertakan posisi belum ditutup tak terhitung)
+    out["demo"].append({"ts": None, "equity": st.get("equity", demo)})
+    return out
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, code, body, ctype="application/json"):
         data = body.encode() if isinstance(body, str) else body
@@ -72,6 +106,9 @@ class Handler(BaseHTTPRequestHandler):
                 coin = safe_coin((q.get("coin") or [""])[0])
                 return self._send(200, json.dumps(
                     read_json(f"backtest_results/{coin}.json")))
+            if u.path == "/api/equity":
+                # kurva pertumbuhan porto (demo + real) — sumber: log/trades.jsonl
+                return self._send(200, json.dumps(equity_history()))
             return self._send(404, json.dumps({"error": "not found"}))
         except Exception as e:
             return self._send(500, json.dumps({"error": str(e)[:200]}))
