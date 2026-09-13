@@ -1,3 +1,14 @@
+## 2026-09-13 — Mode monitor 30-menit aktif + bug installer cron ditemukan & diperbaiki (oleh Hermes)
+- Apa: git pull 0afdcae (mode --monitor: cek posisi 2x/jam, 0 token LLM, fetch hanya koin berposisi). Jalankan update_cron.sh -> TEMUAN: crontab jadi 7 entry (run_scan :05 dobel, digest dobel, watchdog dobel) — penyebab: installer menyaring entry lama dengan `grep -v HERMES` (case-sensitive) padahal entry lama tak memuat kata itu -> penyaringan gagal -> duplikasi. RISIKO: dua run_scan bersamaan tiap jam = double-entry saat TRIGGER.
+- Keputusan: (a) crontab dirapikan manual ke tepat 4 entry kanonik (end-state yang diminta tugas); (b) patch 1 baris scripts/update_cron.sh: grep -v HERMES -> grep -viE 'hermes[-_]?(bundle|bot|env)|run_scan|watchdog' supaya installer idempoten. Keduanya di luar daftar DILARANG (bukan config/engine/sizing); dilakukan segera karena duplikat = risiko operasional nyata Demo Week. Nahkoda review patch di commit ini.
+- Alasan: verifikasi tugas mensyaratkan "4 entry"; installer harus dipakai ulang tanpa menduplikat.
+- Verifikasi (verbatim): uji manual `./hermes-env/bin/python -m hermes_bot.run_scan --monitor` -> "monitor: no open positions", EXIT=0. crontab final 4 entry (idempoten diuji jalankan installer 2x: tetap 4 entry, 0 duplikat):
+  5 * * * * cd /root/hermes-bundle && /root/hermes-bundle/hermes-env/bin/python -m hermes_bot.run_scan >> log/cron.log 2>&1
+  10,40 * * * * cd /root/hermes-bundle && /root/hermes-bundle/hermes-env/bin/python -m hermes_bot.run_scan --monitor >> log/cron.log 2>&1
+  15 0 * * * cd /root/hermes-bundle && /root/hermes-bundle/hermes-env/bin/python -m hermes_bot.run_scan --digest >> log/cron.log 2>&1
+  */30 * * * * cd /root/hermes-bundle && /root/hermes-bundle/hermes-env/bin/python -m hermes_bot.watchdog >> log/cron.log 2>&1
+- Jadwal mesin kini: :05 sinyal/entry · :10 & :40 monitor posisi · 00:15 digest GLM · */30 watchdog. run_scan biasa tidak berubah; config/engine/sizing tidak disentuh.
+
 ## 2026-09-13 — Demo Week dimulai + tunnel systemd (oleh Hermes)
 - Apa: git pull 9888ef5 (TUGAS-AKTIF demo week + BACKLOG dibaca, backlog TIDAK dikerjakan). Baseline config.yaml sha256 = 76a1c9a1d37bca6800c03caab122f7e9d1bd6d68e3564fec07bc22ac2d05d07e (hari pertama, untuk WEEK-REPORT). Item operasional Nahkoda: cloudflared dipindah dari background process ke systemd user unit `hermes-tunnel.service` (Restart=always, RestartSec=10, wrapper scripts/cloudflared-tunnel.sh menulis URL aktif ke log/tunnel.url tiap denyut tunnel).
 - Keputusan: URL tunnel BARU = https://marc-moderator-tournament-utilize.trycloudflare.com (quick tunnel = URL berubah tiap restart; wrapper mencatat URL terkini otomatis). hermes-web-public dinyalakan kembali sebagai target tunnel (bind 0.0.0.0 tetap tak terjangkau langsung dari luar karena VPS di belakang NAT provider).
