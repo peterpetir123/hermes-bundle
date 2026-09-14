@@ -8,7 +8,7 @@ Endpoint:
   GET /api/mind              -> MIND/SESSION-LOG.md
   GET /api/backtest?coin=BTC -> backtest_results/BTC.json
 """
-import json, os
+import json, os, re, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -73,6 +73,86 @@ def equity_history():
     return out
 
 
+# ===== LIVE OPS: detak mesin realtime (baca syslog + state, tanpa state baru) =====
+# Format syslog host ini: 2026-09-14T11:40:06.756255+00:00 host CRON[pid]: (root) CMD (...)
+JOB_PAT = re.compile(r"^(\d{4}-\d\d-\d\d)T(\d\d:\d\d:\d\d).*?CRON\[\d+\]: \(root\) CMD \((.*)\)")
+
+
+def pulse_events(limit=48):
+    """Event denyut dari syslog (baris CRON CMD yang memuat hermes-bundle)."""
+    try:
+        with open("/var/log/syslog", "rb") as f:
+            f.seek(0, 2)
+            f.seek(max(0, f.tell() - 80_000))
+            data = f.read().decode(errors="replace")
+    except Exception:
+        return []
+    evs = []
+    for line in data.splitlines():
+        if "hermes-bundle" not in line or "CMD (" not in line:
+            continue
+        m = JOB_PAT.match(line)
+        if not m:
+            continue
+        cmd = m.group(3)
+        job = ("digest" if "--digest" in cmd else
+               "monitor" if "--monitor" in cmd else
+               "watchdog" if "watchdog" in cmd else "scan")
+        evs.append({"ts": m.group(1) + " " + m.group(2), "job": job})
+    return evs[-limit:]
+
+
+def cloudflared_alive():
+    try:
+        for pid in os.listdir("/proc"):
+            if not pid.isdigit():
+                continue
+            try:
+                cmd = open(f"/proc/{pid}/cmdline", "rb").read().decode(errors="replace")
+            except Exception:
+                continue
+            if "cloudflared" in cmd and "tunnel" in cmd:
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def live_payload():
+    now = time.time()
+    ls = read_json("log/last_scan.json")
+    ls_age = round(now - os.path.getmtime("log/last_scan.json"), 1) \
+        if os.path.exists("log/last_scan.json") else None
+    st = read_json("state/state.json")
+    evs = pulse_events()
+    hari = time.strftime("%Y-%m-%d")
+    counts = {}
+    for e in evs:
+        if e["ts"].split()[0] == hari:
+            counts[e["job"]] = counts.get(e["job"], 0) + 1
+    try:
+        digest_latest = sorted(os.listdir("log/digests"))[-1]
+    except Exception:
+        digest_latest = None
+    return {
+        "now": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(now)),
+        "scan_age_s": ls_age,
+        "scans": ls.get("scans", []) if isinstance(ls, dict) else [],
+        "positions": len(st.get("positions", [])) if isinstance(st, dict) else 0,
+        "equity": st.get("equity") if isinstance(st, dict) else None,
+        "day_pnl": st.get("day_pnl") if isinstance(st, dict) else None,
+        "halted": st.get("halted") if isinstance(st, dict) else None,
+        "kill": os.path.exists("KILL"),
+        "counts_today": counts,
+        "events": evs,
+        "tunnel": {"url": read_text("log/tunnel.url").strip(),
+                   "alive": cloudflared_alive(),
+                   "url_mtime": os.path.getmtime("log/tunnel.url")
+                   if os.path.exists("log/tunnel.url") else None},
+        "digest_latest": digest_latest,
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, code, body, ctype="application/json"):
         data = body.encode() if isinstance(body, str) else body
@@ -109,6 +189,9 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/api/equity":
                 # kurva pertumbuhan porto (demo + real) — sumber: log/trades.jsonl
                 return self._send(200, json.dumps(equity_history()))
+            if u.path == "/api/live":
+                # detak mesin realtime (syslog+state) untuk panel LIVE OPS
+                return self._send(200, json.dumps(live_payload()))
             return self._send(404, json.dumps({"error": "not found"}))
         except Exception as e:
             return self._send(500, json.dumps({"error": str(e)[:200]}))

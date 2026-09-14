@@ -31,6 +31,19 @@ padding:4px 12px;border-radius:6px;cursor:pointer;font:inherit}
 button.on{border-color:var(--blue);color:var(--blue)}
 .md{white-space:pre-wrap;font-size:12px;color:var(--dim);max-height:300px;overflow:auto}
 .status{color:var(--dim);font-size:11px;margin-top:4px}
+.led{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.led.green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.led.amber{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.led.red{background:var(--red);box-shadow:0 0 6px var(--red)}
+.livegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.livecard{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px}
+.livecard .l{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.livecard .v{font-size:15px;margin-top:2px}
+.feed td{padding:2px 8px;font-size:12px}
+.feed td:first-child{color:var(--dim);width:110px}
+.sig td{padding:3px 8px;font-size:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:800px){.two{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -43,7 +56,29 @@ button.on{border-color:var(--blue);color:var(--blue)}
   <div class="card"><div class="lbl">Mode</div><div class="val" style="font-size:16px" id="mode">TESTNET</div></div>
 </div>
 
-<div class="sec">
+<div class="sec" id="liveSec">
+  <h2><span class="led amber" id="ledEngine"></span>LIVE OPS — Mesin Realtime <span class="status" id="liveNow"></span></h2>
+  <div class="livegrid">
+    <div class="livecard"><div class="l">Denyut Sinyal :05</div><div class="v" id="lvScan">–</div></div>
+    <div class="livecard"><div class="l">Monitor :10/:40</div><div class="v" id="lvMon">–</div></div>
+    <div class="livecard"><div class="l">Watchdog */30</div><div class="v" id="lvWd">–</div></div>
+    <div class="livecard"><div class="l">Digest 00:15</div><div class="v" id="lvDig">–</div></div>
+    <div class="livecard"><div class="l">Tunnel</div><div class="v" id="lvTun">–</div></div>
+    <div class="livecard"><div class="l">KILL-switch</div><div class="v" id="lvKill">–</div></div>
+  </div>
+  <div class="two">
+    <div>
+      <h2 style="margin-bottom:4px">Denyut Terakhir (syslog)</h2>
+      <table class="feed" id="feedTable"><tbody><tr><td colspan="2" class="na">memuat…</td></tr></tbody></table>
+    </div>
+    <div>
+      <h2 style="margin-bottom:4px">Sinyal Saat Ini</h2>
+      <table class="sig" id="sigTable"><tbody><tr><td colspan="3" class="na">memuat…</td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div class="sec" id="posSec">
   <h2>Posisi Terbuka</h2>
   <table id="posTable"><thead><tr><th>Koin</th><th>Entry</th><th>SL</th><th>PnL</th></tr></thead>
   <tbody><tr><td colspan="4" class="na">memuat…</td></tr></tbody></table>
@@ -207,6 +242,47 @@ function loadEquity(){
     EQDATA=d; drawEquity();
   }).catch(function(){});
 }
+
+// ====== LIVE OPS realtime (5 detik) ======
+var JOBLBL={scan:"Sinyal :05",monitor:"Monitor",watchdog:"Watchdog",digest:"Digest"};
+var JOBCOL={scan:"var(--blue)",monitor:"var(--amber)",watchdog:"var(--dim)",digest:"var(--green)"};
+function ageStr(s){
+  if(s===null||s===undefined)return"–";
+  var m=Math.floor(s/60);
+  if(m<60)return m+" mnt lalu";
+  var h=Math.floor(m/60);return h+" jam "+(m%60)+" mnt lalu";
+}
+function loadLive(){
+  fetch("/api/live").then(function(r){return r.json()}).then(function(d){
+    $id("liveNow").textContent="· "+d.now;
+    var age=d.scan_age_s,led=$id("ledEngine"),lbl=$id("lvScan");
+    if(age===null){led.className="led red";lbl.textContent="TIDAK ADA DATA"}
+    else if(age<3700){led.className="led green";lbl.textContent="HIJAU · "+ageStr(age)}
+    else if(age<7500){led.className="led amber";lbl.textContent="TELAT · "+ageStr(age)}
+    else{led.className="led red";lbl.textContent="MATI? · "+ageStr(age)}
+    var c=d.counts_today||{};
+    $id("lvMon").textContent=(c.monitor||0)+"x hari ini";
+    $id("lvWd").textContent=(c.watchdog||0)+"x hari ini · OK";
+    $id("lvDig").textContent=d.digest_latest||"–";
+    var t=d.tunnel||{};
+    $id("lvTun").innerHTML=t.alive?'<span class="pos">AKTIF</span> <a href="'+t.url+'" style="color:var(--blue)">'+t.url.replace("https://","").slice(0,22)+"…</a>":'<span class="neg">MATI</span>';
+    $id("lvKill").innerHTML=d.kill?'<span class="neg">AKTIF (entry beku)</span>':'<span class="pos">tidak aktif</span>';
+    var ft=$id("feedTable").tBodies[0];ft.innerHTML="";
+    (d.events||[]).slice(-12).reverse().forEach(function(e){
+      var tr=document.createElement("tr");
+      tr.innerHTML="<td>"+e.ts+"</td><td style='color:"+(JOBCOL[e.job]||"inherit")+"'>"+(JOBLBL[e.job]||e.job)+"</td>";
+      ft.appendChild(tr);
+    });
+    var st=$id("sigTable").tBodies[0];st.innerHTML="";
+    (d.scans||[]).forEach(function(s){
+      var col=s.status==="BLOCKED_REGIME"?"var(--red)":"var(--green)";
+      var tr=document.createElement("tr");
+      tr.innerHTML="<td>"+s.coin+"</td><td style='color:"+col+"'>"+s.status+"</td><td class='na'>"+s.regime+"</td>";
+      st.appendChild(tr);
+    });
+    if(!(d.scans||[]).length)st.innerHTML='<tr><td colspan="3" class="na">–</td></tr>';
+  }).catch(function(){});
+}
 function bindEqBtns(){
   [["btDemo","demo"],["btReal","real"],["btBoth","both"]].forEach(function(b){
     var el=$id(b[0]);
@@ -249,7 +325,8 @@ function refresh(){
 }
 
 (function init(){
-  bindEqBtns();
+  bindEqBtns(); loadLive();
+  setInterval(loadLive,5000); // panel LIVE OPS: refresh cepat 5 detik
   var box=$id("coinBtns");
   COINS.forEach(function(cn){
     var b=document.createElement("button");
