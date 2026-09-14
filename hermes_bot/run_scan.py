@@ -48,6 +48,11 @@ def monitor(cfg):
 
 
 def main(digest=False):
+    # PAUSE = Hermes dihentikan via /off: tidak ada analisa/fetch/LLM/entry/
+    # monitor/digest sama sekali. Infrastruktur (Telegram, watchdog) tetap hidup.
+    if os.path.exists("PAUSE"):
+        print(f"hermes: PAUSED sejak {open('PAUSE').read().strip()} — /on untuk aktifkan")
+        return
     cfg = yaml.safe_load(open("config.yaml"))
     if "--monitor" in sys.argv:
         monitor(cfg)

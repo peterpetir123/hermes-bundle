@@ -9,6 +9,12 @@ from hermes_bot.notify import telegram_bot as tg
 
 def main():
     msgs = []
+    if os.path.exists("PAUSE"):
+        # PAUSE baru (<40 mnt) -> kabari sekali; ulangan tiap 30 mnt = spam
+        pause_age = time.time() - os.path.getmtime("PAUSE")
+        if pause_age < 40 * 60:
+            msgs.append(f"mesin PAUSED via /off (sejak {open('PAUSE').read().strip()}) "
+                        "— analisa/entry/monitor/digest berhenti; Telegram tetap hidup")
     if os.path.exists("KILL"):
         # alarm KILL cukup SEKALI saat baru dibuat (umur <40 mnt);
         # ulangan tiap 30 mnt = spam, KILL sudah dikonfirmasi via /off

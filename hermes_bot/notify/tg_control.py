@@ -63,7 +63,9 @@ def _summary():
 
 def cmd_status():
     st, age = _summary()
+    paused = os.path.exists("PAUSE")
     lines = ["🔧 *HERMES STATUS*",
+             f"mesin: {'🛑 PAUSED (dihentikan via /off)' if paused else '🟢 AKTIF — SOP penuh jalan'}",
              f"mode: TESTNET Tahap {st.get('stage', 'A')}",
              f"equity: ${st.get('equity', 0):.2f} · day_pnl: {st.get('day_pnl', 0):+.2f}",
              f"posisi terbuka: {len(st['positions'])}/3 · halted: {st.get('halted')}",
@@ -73,21 +75,33 @@ def cmd_status():
     return "\n".join(lines)
 
 
-def cmd_off():
-    open("KILL", "w").write(time.strftime("%Y-%m-%d %H:%M:%S UTC",
-                                          time.gmtime()))
-    return ("🛑 *MESIN DIMATIKAN* (KILL aktif)\n"
-            "Entry DIBEKUKAN. Denyut, monitor posisi, watchdog, digest "
-            "TETAP jalan. Kirim /on untuk menyalakan kembali.")
+def cmd_off(confirm=False):
+    st, _ = _summary()
+    n_pos = len(st.get("positions", []))
+    if n_pos and not confirm:
+        return (f"⚠️ *PERINGATAN: {n_pos} posisi TERBUKA* akan tidak dipantau "
+                "kalau mesin dihentikan (trailing/close berhenti).\n"
+                "Tetap hentikan? Kirim: /off yakin")
+    if not os.path.exists("PAUSE"):
+        open("PAUSE", "w").write(time.strftime("%Y-%m-%d %H:%M:%S UTC",
+                                               time.gmtime()))
+    return ("🛑 *HERMES DIHENTIKAN* (PAUSE aktif)\n"
+            "Semua analisa, entry, monitor posisi, dan digest BERHENTI.\n"
+            "Bot Telegram ini & watchdog tetap hidup.\n"
+            "Kirim /on untuk menyalakan kembali, /status untuk cek.")
 
 
 def cmd_on():
-    existed = os.path.exists("KILL")
-    if existed:
-        os.remove("KILL")
-    return ("🟢 *MESIN MENYALA*" + (" (KILL dihapus)" if existed else
-            " (memang sudah aktif)") +
-            "\nEntry kembali diizinkan saat syarat terpenuhi.")
+    was = []
+    for f in ("PAUSE", "KILL"):
+        if os.path.exists(f):
+            os.remove(f)
+            was.append(f)
+    if not was:
+        return "🟢 Hermes memang sudah AKTIF — SOP penuh berjalan."
+    return ("🟢 *HERMES MENYALA KEMBALI*\n"
+            "SOP penuh jalan: sinyal :05 · monitor posisi :10/:40 · "
+            "digest 00:15 · watchdog */30.")
 
 
 def cmd_ask(q):
@@ -123,7 +137,8 @@ def handle_update(msg):
     text = (msg.get("text") or "").strip()
     low = text.lower()
     if low in ("/off", "/stop"):
-        _reply(chat, cmd_off())
+        _reply(chat, cmd_off(confirm=(low == "/off yakin" or
+                                      text.lower().endswith("yakin"))))
     elif low == "/on":
         _reply(chat, cmd_on())
     elif low in ("/status", "/s"):
@@ -137,8 +152,9 @@ def handle_update(msg):
     elif low in ("/start", "/help"):
         _reply(chat, "🤖 *HERMES CONTROL*\n"
                      "/status — kondisi mesin\n"
-                     "/off — bekukan entry (KILL)\n"
-                     "/on — aktifkan entry\n"
+                     "/off — HENTIKAN Hermes total (analisa+entry+monitor+digest)\n"
+                     "/off yakin — paksa hentikan meski ada posisi terbuka\n"
+                     "/on — nyalakan kembali SOP penuh\n"
                      "/ask <tanya> — tanya status via GLM\n"
                      "teks bebas — masuk inbox Hermes (dibaca sesi berikut)")
     elif text:
