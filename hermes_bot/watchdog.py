@@ -10,7 +10,11 @@ from hermes_bot.notify import telegram_bot as tg
 def main():
     msgs = []
     if os.path.exists("KILL"):
-        msgs.append("KILL-switch aktif — eksekusi berhenti (rm KILL untuk resume)")
+        # alarm KILL cukup SEKALI saat baru dibuat (umur <40 mnt);
+        # ulangan tiap 30 mnt = spam, KILL sudah dikonfirmasi via /off
+        kill_age = time.time() - os.path.getmtime("KILL")
+        if kill_age < 40 * 60:
+            msgs.append("KILL-switch aktif — eksekusi berhenti (rm KILL untuk resume)")
     if os.path.exists("state/state.json"):
         s = json.load(open("state/state.json"))
         if s.get("halted"):
