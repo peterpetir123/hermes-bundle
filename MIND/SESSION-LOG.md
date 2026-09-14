@@ -1,3 +1,16 @@
+## 2026-09-14 — Dashboard realtime (LIVE OPS) live + demo-day 13 & 14 Sep (oleh Hermes)
+- Apa: (1) Panel LIVE OPS baru di dashboard: endpoint /api/live (baca syslog CRON + state, 0 token LLM) + frontend refresh 5 detik — LED kesehatan mesin (HIJAU/TELAT/MATI berdasarkan umur last_scan), hitungan denyut per job hari ini, feed 12 denyut terakhir dengan timestamp, tabel sinyal per aset realtime, status tunnel & KILL-switch. Bug ditemukan saat uji: regex syslog awal tidak cocok format ISO host ini -> diperbaiki, terverifikasi data nyata (14 Sep: scan 9, monitor 20, watchdog 19). (2) Rutin harian Demo Week dua hari yang tertunda (sesi terpotong) ditutup di entri ini.
+- Keputusan: panel LIVE OPS dibangun read-only murni (tanpa kontrol) — sesuai filosofi mesin aturan; feed dari syslog, bukan state baru. Demo-day 13+14 digabung satu entri karena kejadian luar biasa (kredit habis), bukan kelalaian rutin.
+- Alasan: Nahkoda minta "tampilan web berjalan realtime sesuai yang kamu kerjakan"; denyut tetap jalan walau sesi Hermes mati (cron independen — terbukti).
+- Verifikasi (verbatim): 
+  Denyut 13 Sep: total=104 (scan=23, monitor=32, watchdog=48, digest=1) -> uptime denyut sinyal 23/24 = 96% (satu jam bolong: 05:05 UTC saat sesi Hermes mati; cron kembali jalan 06:05).
+  Denyut 14 Sep (s.d. 12:00 UTC): total=61 (scan=12, monitor=24, watchdog=24, digest=1) -> on-track 12/12 jam.
+  Digest terbit: log/digests/2026-09-13.md, 2026-09-14.md (GLM jalan, tanpa GLM_ERROR).
+  Sinyal: semua aset BLOCKED_REGIME (CHOP) sepanjang 13-14 Sep — nol TRIGGER, nol entry, nol close. Tidak ada error/alarm di cron.log. 
+  Ekuitas demo: $20.00 (awal=$20.00, day_pnl 0.00, 0 posisi, halted=false). KILL-switch: tidak aktif. Tunnel: aktif, URL decide-saturday-participation-alpine.trycloudflare.com (200).
+  Commit: 6b854dd (LIVE OPS panel) + entri ini.
+- Dua-track Signal-Log: tidak ada entry pada periode ini (nol TRIGGER) — tidak ada yang dicatat; sesuai tugas, nol entry bukan kegagalan selama denyut & log sehat (dan mereka sehat).
+
 ## 2026-09-13 — Mode monitor 30-menit aktif + bug installer cron ditemukan & diperbaiki (oleh Hermes)
 - Apa: git pull 0afdcae (mode --monitor: cek posisi 2x/jam, 0 token LLM, fetch hanya koin berposisi). Jalankan update_cron.sh -> TEMUAN: crontab jadi 7 entry (run_scan :05 dobel, digest dobel, watchdog dobel) — penyebab: installer menyaring entry lama dengan `grep -v HERMES` (case-sensitive) padahal entry lama tak memuat kata itu -> penyaringan gagal -> duplikasi. RISIKO: dua run_scan bersamaan tiap jam = double-entry saat TRIGGER.
 - Keputusan: (a) crontab dirapikan manual ke tepat 4 entry kanonik (end-state yang diminta tugas); (b) patch 1 baris scripts/update_cron.sh: grep -v HERMES -> grep -viE 'hermes[-_]?(bundle|bot|env)|run_scan|watchdog' supaya installer idempoten. Keduanya di luar daftar DILARANG (bukan config/engine/sizing); dilakukan segera karena duplikat = risiko operasional nyata Demo Week. Nahkoda review patch di commit ini.
