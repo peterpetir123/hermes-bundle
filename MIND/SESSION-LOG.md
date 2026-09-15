@@ -1,3 +1,9 @@
+## 2026-09-15 — Laporan analisa tiap 30 menit ke Telegram (permintaan Nahkoda) (oleh Hermes)
+- Apa: run_scan.py fungsi baru _periodic_report() — dipanggil di monitor() (:10/:40) saat env TELEGRAM_PERIODIC=1: kirim ringkasan 0-token ke Telegram (equity, day_pnl, posisi+SL, 5 baris sinyal koin: status/regime/px/trigger/dist ATR). Cron diupdate: 3 entry pakai TELEGRAM_PERIODIC=1 (scan :05, monitor :10/:40, digest 00:15); watchdog tetap tanpa env. Laporan percobaan nyata terkirim ke HP Nahkoda.
+- Keputusan: (a) env var di level crontab per-entry (bukan /etc/environment global) supaya watchdog tetap senyap; (b) laporan periodik ikut PAUSE — saat /off, tidak ada pesan (mesin diminta berhenti total); (c) template murni 0 token GLM — narasi GLM tetap khusus digest 00:15 (keputusan 2026-09-13); (d) pesan periodik TIDAK menyala di run_scan :05 utama (hindari dobel dengan monitor 5 mnt kemudian) — hanya :10/:40 = tepat tiap 30 menit.
+- Alasan: permintaan eksplisit Nahkoda "kirim hasil analisa setiap 30 menit" selama mesin tidak di-/off.
+- Verifikasi (verbatim): py_compile OK; TELEGRAM_PERIODIC=1 run_scan --monitor -> "monitor: no open positions", EXIT=0 + laporan nyata masuk Telegram (panggilan _periodic_report langsung); crontab final 4 entry dengan env var; /off -> laporan berhenti otomatis (PAUSE dicek lebih dulu di main()).
+
 ## 2026-09-15 — Verifikasi fitur narasi F&G + berita (df39d77) — semua langkah LULUS (oleh Hermes)
 - Apa: git pull df39d77. Keputusan 2026-09-13 dibaca: narasi = REPORT-ONLY SELAMANYA, tidak pernah gate eksekusi; cache 1 jam (0 token di denyut). Restart web (catatan: unit yang dipakai = hermes-web-public via tunnel; hermes-web lama 127.0.0.1 di-disable — instruksi 'restart hermes-web' disesuaikan karena port 8080 dipegang instance public). Sentiment smoke, denyut :05, digest builder, dashboard — semuanya diuji.
 - Verifikasi (verbatim):

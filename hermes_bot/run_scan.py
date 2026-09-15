@@ -29,8 +29,12 @@ if os.path.exists(ENV):
 
 def monitor(cfg):
     """Cek posisi terbuka TANPA LLM (0 token): fetch hanya koin berposisi,
-    jalankan manage() (trailing + close saat SL tersapu), alert event."""
+    jalankan manage() (trailing + close saat SL tersapu), alert event.
+    SEKALIGUS kirim ringkasan analisa ke Telegram (TELEGRAM_PERIODIC=1,
+    keputusan Nahkoda 2026-09-15) — hanya saat tidak PAUSED."""
     state = load_state()
+    if os.environ.get("TELEGRAM_PERIODIC") == "1":
+        _periodic_report(state, cfg)
     if not state["positions"]:
         print("monitor: no open positions")
         return
@@ -45,6 +49,30 @@ def monitor(cfg):
         elif ev.get("event") == "CLOSE_FAIL":
             tg.alert_system(f"close gagal {ev.get('coin')}: {ev.get('r')}")
     print(f"monitor: {len(coins)} posisi dicek ({', '.join(coins)}), {n_ev} event")
+
+
+def _periodic_report(state, cfg):
+    """Ringkasan analisa tiap denyut monitor (:10/:40) -> Telegram.
+    0 token: template string murni. Fallback = alert_system jika gagal kirim."""
+    try:
+        ls = json.load(open("log/last_scan.json")) if os.path.exists(
+            "log/last_scan.json") else {"scans": []}
+        rows = []
+        for s in ls.get("scans", []):
+            rows.append(f"{s['coin']}: {s['status']} ({s.get('regime')}, "
+                        f"{s.get('px'):g}, trig {s.get('trigger'):g}, "
+                        f"dist {s.get('dist_atr')} ATR)")
+        pos = state.get("positions", [])
+        pos_txt = (" | ".join(f"{p['coin']} @{p['entry']:g} SL {p['sl']:g}"
+                              for p in pos)) if pos else "tidak ada"
+        pnl = state.get("day_pnl", 0.0)
+        txt = (f"📡 HERMES {time.strftime('%H:%M UTC')}\n"
+               f"equity ${state.get('equity', 0):.2f} · day {pnl:+.2f}\n"
+               f"posisi: {pos_txt}\n"
+               + "\n".join(rows))
+        tg.digest_raw(state, txt)
+    except Exception as e:
+        tg.alert_system(f"periodic report gagal: {str(e)[:120]}")
 
 
 def main(digest=False):
@@ -105,7 +133,7 @@ def main(digest=False):
         if ev.get("event") == "CLOSED_TRAIL":
             tg.alert_close(ev)
         elif ev.get("event") == "CLOSE_FAIL":
-            tg.alert_system(f"close gagal {ev.get('coin')}: {ev.get('r')}")
+            tg.alert_system(f"close gagal {ev['coin']}: {ev.get('r')}")
 
     # log + print + digest
     os.makedirs("log", exist_ok=True)
