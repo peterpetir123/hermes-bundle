@@ -20,6 +20,15 @@
 - DILARANG: perintah lain (jangan buat /sell /buy /close — mesin aturan
   yang memutus, bukan chat).
 
+## 1b. [SELESAI 13 Sep — pindah ke done] Telegram alert dasar
+- alert_open/close/system/digest sudah ada; tinggal kredensial di .env VPS
+  (Nahkoda sudah pasang — Hermes verifikasi alert nyata ke HP).
+
+## 1c. [13 Sep, DIPASANG] Narasi pasar (F&G + berita)
+- core/sentiment.py: fear_greed() + headlines() cache 1 jam, 0 token.
+- Digest memuat blok NARASI; dashboard /api/sentiment + panel.
+- KEPUTUSAN: report-only selamanya sampai backtest membuktikan nilai.
+
 ## 3. [20 Sep] Evaluasi XRP
 - XRP merah di dual-window (PF 0.56, -3.2R, MC p95 6.9).
 - Keputusan Nahkoda 13 Sep: PERTAHANKAN selama demo week (gate melindungi,

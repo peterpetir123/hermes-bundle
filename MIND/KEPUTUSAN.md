@@ -4,6 +4,9 @@
 
 | Tanggal | Keputusan | Alasan | Sumber Otoritas |
 |---|---|---|---|
+| 2026-09-13 | Narasi (Fear&Greed + RSS berita) masuk digest + dashboard, REPORT-ONLY SELAMANYA hingga ada backtest yang membuktikan nilai prediktifnya | pelajaran M15: 24.560 trade negatif — menambah sinyal tanpa bukti = membakar modal; narasi tidak pernah gate eksekusi | Nahkoda + vault §7 |
+| 2026-09-13 | Cache sentimen/berita 1 jam (cache/fng.json, cache/news.json) | denyut tiap 30 mnt tidak boleh boros API; digest 1x/hari yang merangkum via GLM | efisiensi token |
+| 2026-09-13 | Telegram kontrol /stop /on /status = /stop hanya touch KILL (bukan kill proses) | denyut tetap jalan (data tercatat), hanya eksekusi entry dibekukan; mekanisme KILL sudah ada di risk.py | desain minimal |
 | 2026-09-12 | Tafsir gerbang backtest: n≥100 didesain utk 20 aset × 9 thn; utk 5 aset × ~6 thn, n=8–13/asets = WAJAR. Kolom FAIL per-aset = informatif, BUKAN pemblokir. Kriteria keputusan aset = arah totR + PF + MC p95 | gerbang baku tidak boleh dibongkar; tafsir konteks = wewenang Nahkoda | Nahkoda 2026-09-12 |
 | 2026-09-12 | 4/5 aset lolos tafsir (BTC/ETH/SOL/DOGE: totR positif, PF>2). XRP merah di kedua window (PF 0.56, -3.2R, MC p95 6.9) | bukti dual-window reproducible lintas mesin | SUMMARY.md ec2903e |
 | 2026-09-12 | Semua fase 0–3 dinyatakan SELESAI & TERVERIFIKASI -> TUGAS-AKTIF.md dihapus sesuai aturannya | laporan Hermes verbatim + reproducible + engine/config tak tersentuh | Nahkoda 2026-09-12 |

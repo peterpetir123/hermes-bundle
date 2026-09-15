@@ -28,6 +28,12 @@ def build_summary(state, scans, pm_lines):
         prob = prob_lines(state)
     except Exception:
         prob = []
+    # narasi (report-only, MIND/KEPUTUSAN.md): sentimen + berita
+    try:
+        from hermes_bot.core.sentiment import summary_lines as nar_lines
+        nar = nar_lines()
+    except Exception:
+        nar = []
     return "\n".join([
         f"equity=${state.get('equity', 0):.2f} day_pnl={state.get('day_pnl', 0):+.2f} "
         f"halted={state.get('halted')} stage={state.get('stage')}",
@@ -40,6 +46,7 @@ def build_summary(state, scans, pm_lines):
                              for x in scans),
         "\n".join(pm_lines),
         *prob,
+        *nar,
     ])
 
 

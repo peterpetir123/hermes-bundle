@@ -109,6 +109,12 @@ button.on{border-color:var(--blue);color:var(--blue)}
 </div>
 
 <div class="sec">
+  <h2>Narasi Pasar <span class="na">(report-only — bukan sinyal entry)</span></h2>
+  <div class="row"><span class="pill" id="fng">Fear&Greed: –</span></div>
+  <div class="md" id="news">memuat…</div>
+</div>
+
+<div class="sec">
   <h2>MIND / SESSION-LOG</h2>
   <div class="md" id="mind">memuat…</div>
 </div>
@@ -320,8 +326,24 @@ function loadMind(){
   }).catch(function(){$id("mind").textContent="gagal memuat"});
 }
 
+function loadSentiment(){
+  fetch("/api/sentiment").then(function(r){return r.json()}).then(function(d){
+    var fg=d.fng||{};
+    var el=$id("fng");
+    if(fg.value!==undefined){
+      el.textContent="Fear&Greed: "+fg.value+" ("+(fg.label||"")+")";
+      el.style.color = fg.value>=75?"#e5484d":fg.value>=55?"#46a758":fg.value>=45?"#e5a000":"#46a758";
+      el.style.borderColor = el.style.color;
+    } else { el.textContent="Fear&Greed: n/a"; }
+    var nw=d.news||[];
+    $id("news").textContent = nw.length
+      ? nw.map(function(x){return "• "+x.title}).join("\n")
+      : "n/a (sumber gagal / cache kosong — denyut :05 berikutnya mengisi)";
+  }).catch(function(){$id("news").textContent="gagal memuat"});
+}
+
 function refresh(){
-  loadState(); loadScan(); loadCandles(CUR); loadBacktest(CUR); loadMind(); loadEquity();
+  loadState(); loadScan(); loadCandles(CUR); loadBacktest(CUR); loadMind(); loadEquity(); loadSentiment();
 }
 
 (function init(){

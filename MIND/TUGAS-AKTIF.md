@@ -1,38 +1,35 @@
-# TUGAS AKTIF Hermes — DEMO WEEK (Tahap A smoke)
+# TUGAS AKTIF Hermes — Telegram aktif + Verifikasi Narasi (13 Sep)
 
-> Ditetapkan Nahkoda 2026-09-13. Periode: 2026-09-13 -> 2026-09-20.
-> Tujuan minggu ini = uji OPERASIONAL (denyut hidup 24/7, nol error, log rapi,
-> digest terbit, entry tercatat benar) — BUKAN membuktikan profit.
-> Strategi D1 lambat: 0-2 entry dalam seminggu = NORMAL, nol entry pun bukan
-> kegagalan selama denyut & log sehat.
+> Demo Week tetap berjalan (tugas sebelumnya). Tugas ini PENAMBAHAN.
+> Setelah selesai & terverifikasi: hapus file ini, catat di SESSION-LOG.
 
-=== RUTIN HARIAN (cron sudah jalan — JANGAN diubah) ===
-- Denyut per jam (:05), digest harian (00:15), watchdog (*/30) — biarkan.
-- Tugasmu TAMBAHAN:
-  a. Tiap hari 00:15 (selepas digest): append MIND/SESSION-LOG.md dengan
-     ringkasan 1 hari:
-     - jumlah denyut tercatat (dari log/last_scan.json mtime history/cron.log)
-     - sinyal per aset (regime/status)
-     - entry/close jika ada — dua-track (SINYAL-SISTEM + KEPUTUSAN-NAHKODA)
-     - error/alarm yang muncul
-     - uptime denyut hari itu (denyut tercatat / 24)
-  b. Commit + push harian: "mind: demo-day <tanggal>".
-  c. Setiap TRIGGER -> pastikan entry testnet tercatat di state + baris
-     Signal-Log dua track ditulis.
-- DILARANG: ubah config.yaml/sizing/watchlist, isi kredensial, jalankan
-  setup_vps.sh, ubah bind dashboard. Keputusan = Nahkoda.
+=== TAHAP 1: TELEGRAM (prioritas) ===
+1. Nahkoda sudah mengisi TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID di .env.
+   Verifikasi: grep -c "TELEGRAM" .env (harus 2 baris terisi, JANGAN
+   tampilkan nilainya di log/laporan, JANGAN commit .env).
+2. Uji kirim nyata:
+   ./hermes-env/bin/python -c "
+   import sys; sys.path.insert(0,'.')
+   from hermes_bot.notify.telegram_bot import alert_system
+   print('terkirim:', alert_system('tes koneksi Telegram — Hermes aktif'))"
+   -> harus True DAN Nahkoda menerima pesan di HP.
+3. Catat di SESSION-LOG: timestamp + hasil True/False. Jangan catat token.
 
-=== LAPORAN AKHIR: 2026-09-20 ===
-Buat MIND/WEEK-REPORT.md berisi:
-1. Uptime % seminggu (total denyut tercatat / 168)
-2. Jumlah sinyal per aset + jumlah trade (open/closed)
-3. Daftar error/alarm + penanganannya
-4. sha256sum config.yaml hari pertama vs terakhir (HARUS identik)
-5. Ekuitas demo akhir vs awal
-Commit + push, lalu lapor ke Nahkoda. Hapus TUGAS-AKTIF.md ini HANYA
-setelah WEEK-REPORT.md ter-push.
+=== TAHAP 2: FITUR NARASI (dari upstream, commit ini) ===
+1. Baca MIND/KEPUTUSAN.md dulu: narasi = REPORT-ONLY SELAMANYA.
+2. Verifikasi denyut :05 berikutnya:
+   - cache/fng.json + cache/news.json terisi (ls -la cache/)
+   - curl -s 127.0.0.1:8080/api/sentiment | head -c 200 -> JSON fng+news
+   - Dashboard (via tunnel) menampilkan badge F&G + panel BERITA 24J
+3. Verifikasi digest 00:15 malam ini:
+   - TERKIRIM ke Telegram Nahkoda (bukan cuma file)
+   - berisi blok NARASI (fear_greed + berita) dirangkum GLM
+   - tersimpan di log/digests/
 
-=== CATATAN ===
-- BACKLOG (Telegram alert + kontrol /stop /on /status) lihat MIND/BACKLOG.md
-  — JANGAN kerjakan sekarang; tunggu tugas eksplisit Nahkoda.
-- Langkah ambigu / error tak dipahami -> BERHENTI, laporkan, tunggu.
+=== ATURAN ===
+- Jika fetch F&G/RSS gagal di VPS: jangan patch — fallback kosong adalah
+  perilaku benar; laporkan error verbatim.
+- DILARANG: ubah config/engine/sizing/logika entry, commit kredensial,
+  ubah bind dashboard, kerjakan BACKLOG /stop /on (tunggu tugas eksplisit).
+- Append SESSION-LOG + commit + push tiap penyelesaian tahap.
+- Langkah ambigu -> BERHENTI, laporkan, tunggu Nahkoda.

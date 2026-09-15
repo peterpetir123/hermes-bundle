@@ -192,6 +192,11 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/api/live":
                 # detak mesin realtime (syslog+state) untuk panel LIVE OPS
                 return self._send(200, json.dumps(live_payload()))
+            if u.path == "/api/sentiment":
+                # narasi report-only: F&G + berita (cache 1 jam dari core.sentiment)
+                return self._send(200, json.dumps({
+                    "fng": read_json("cache/fng.json"),
+                    "news": read_json("cache/news.json")}))
             return self._send(404, json.dumps({"error": "not found"}))
         except Exception as e:
             return self._send(500, json.dumps({"error": str(e)[:200]}))
