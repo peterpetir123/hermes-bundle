@@ -16,6 +16,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
 os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
+# load .env sederhana (cron standalone tidak lewat run_scan) — bug temuan Hermes
+_env = os.path.join(os.getcwd(), ".env")
+if os.path.exists(_env):
+    for _line in open(_env):
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
 UA = {"User-Agent": "Mozilla/5.0"}  # CF 1010-blocker: UA python-urllib diblok
 CACHE = "cache"
 JOURNAL = "MIND/PEMBELAJARAN.md"

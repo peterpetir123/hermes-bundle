@@ -32,3 +32,7 @@
 ## 4. [Nanti, Tahap B] Saldo real di dashboard
 - Field saldo_real sudah disiapkan (null). Aktif saat private key HL
   agent dipasang — JANGAN isi sebelum Nahkoda membuka Tahap B eksplisit.
+
+## [LEARN 2026-09-16 09:44:44 UTC] Usulan dari Investing with Martingale – An Experiment with RSI+Martingale Position Sizing
+- (tidak ada usulan ubah parameter — Martingale tidak layak diuji di Hermes karena bertentangan dengan prinsip risiko trailing/SL tetap; jika suatu saat ingin diuji, gerbang backtest tetap: n>=100, PF>=1.1, totR>0, MC p95 positif — hampir pasti gagal MC p95 karena tail risk-nya)
+-> MENUNGGU SYARAT BUKTI + keputusan Nahkoda.
