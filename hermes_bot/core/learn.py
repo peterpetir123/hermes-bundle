@@ -70,6 +70,8 @@ def _pick_source():
         links = re.findall(r"<link>(https?://[^<]+)</link>", xml)[1:]  # [0]=channel
         titles = re.findall(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", xml)[1:]
         for url, title in zip(links, titles):
+            if url.lower().split("?")[0].endswith((".pdf", ".png", ".jpg", ".mp4")):
+                continue  # bukan artikel — jangan buang panggilan GLM
             if url not in seen:
                 return {"url": url, "title": htmlmod.unescape(title)}
     return None
@@ -80,10 +82,14 @@ def run_session():
     if not os.path.exists("LEARN"):
         return "learn: flag LEARN tidak ada — /learn untuk mengaktifkan"
     try:
-        last = os.path.getmtime("cache/learn_last.json")
-        if time.time() - last < 86400:
-            return (f"learn: sesi hari ini sudah jalan "
-                    f"({time.strftime('%H:%M', time.gmtime(last))} UTC) — besok lagi")
+        path = f"{CACHE}/learn_last.json"
+        last = json.load(open(path))
+        age = time.time() - os.path.getmtime(path)
+        # sukses blokir 24 jam; gagal hanya 1 jam (cron hourly boleh ulang)
+        ttl, ket = (3600, "gagal sebelumnya — ulang jam berikutnya") \
+            if last.get("gagal") else (86400, f"sudah jalan {last.get('ts', '')} — besok lagi")
+        if age < ttl:
+            return f"learn: {ket}"
     except Exception:
         pass
     src = _pick_source()
@@ -99,8 +105,9 @@ def run_session():
                  f"Judul: {src['title']}\nURL: {src['url']}\n\nIsi:\n{body}"}]
         out = chat(msgs, max_tokens=2000) or chat(msgs, max_tokens=2000)
         # router sesekali kembalikan kosong -> 1 retry cukup
-        if not out:
-            raise ValueError("GLM kosong setelah retry")
+        # PENTING: chat() gagal mengembalikan "GLM_ERROR: ..." (bukan None)
+        if not out or out.startswith("GLM_ERROR"):
+            raise ValueError((out or "GLM kosong setelah retry")[:150])
     except Exception as e:
         json.dump({"ts": time.strftime("%F %T UTC"), "url": src["url"],
                    "gagal": str(e)[:150]},
