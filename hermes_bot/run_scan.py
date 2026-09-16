@@ -135,11 +135,21 @@ def main(digest=False):
         elif ev.get("event") == "CLOSE_FAIL":
             tg.alert_system(f"close gagal {ev['coin']}: {ev.get('r')}")
 
+    # watch-queue (report-only, MIND/KEPUTUSAN.md): ETA adaptif ke TRIGGER
+    try:
+        from hermes_bot.core.watchqueue import update as wq_update, line as wq_line
+        wq = wq_update(scans)
+        wq_lines = [wq_line(wq)]
+    except Exception as e:
+        wq, wq_lines = [], [f"watchqueue: n/a ({str(e)[:60]})"]
+
     # log + print + digest
     os.makedirs("log", exist_ok=True)
-    json.dump({"scans": scans}, open("log/last_scan.json", "w"), indent=1)
+    json.dump({"scans": scans, "watchqueue": wq},
+              open("log/last_scan.json", "w"), indent=1)
     print("\n".join(lines))
     print("\n".join(pm_lines))
+    print("\n".join(wq_lines))
     if opened:
         print(f"OPENED: {[p['coin'] for p in opened]}")
 

@@ -197,6 +197,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, json.dumps({
                     "fng": read_json("cache/fng.json"),
                     "news": read_json("cache/news.json")}))
+            if u.path == "/api/watchqueue":
+                # antrean koin terdekat TRIGGER (report-only, dari last_scan)
+                sc = read_json("log/last_scan.json")
+                return self._send(200, json.dumps(
+                    sc.get("watchqueue", []) if "error" not in sc else []))
             return self._send(404, json.dumps({"error": "not found"}))
         except Exception as e:
             return self._send(500, json.dumps({"error": str(e)[:200]}))

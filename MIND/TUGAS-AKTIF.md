@@ -1,35 +1,33 @@
-# TUGAS AKTIF Hermes — Telegram aktif + Verifikasi Narasi (13 Sep)
+# TUGAS AKTIF Hermes — Watch-Queue (ETA adaptif) verifikasi (14 Sep)
 
-> Demo Week tetap berjalan (tugas sebelumnya). Tugas ini PENAMBAHAN.
-> Setelah selesai & terverifikasi: hapus file ini, catat di SESSION-LOG.
+> Demo Week tetap berjalan. Setelah selesai & terverifikasi: hapus file
+> ini, catat di SESSION-LOG.
 
-=== TAHAP 1: TELEGRAM (prioritas) ===
-1. Nahkoda sudah mengisi TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID di .env.
-   Verifikasi: grep -c "TELEGRAM" .env (harus 2 baris terisi, JANGAN
-   tampilkan nilainya di log/laporan, JANGAN commit .env).
-2. Uji kirim nyata:
-   ./hermes-env/bin/python -c "
-   import sys; sys.path.insert(0,'.')
-   from hermes_bot.notify.telegram_bot import alert_system
-   print('terkirim:', alert_system('tes koneksi Telegram — Hermes aktif'))"
-   -> harus True DAN Nahkoda menerima pesan di HP.
-3. Catat di SESSION-LOG: timestamp + hasil True/False. Jangan catat token.
+1. cd ~/hermes-bundle && git pull  (harus dapat commit watchqueue)
+   Baca MIND/KEPUTUSAN.md entri watch-queue: REPORT-ONLY, ETA = estimasi
+   prioritas perhatian BUKAN janji. Tidak menyentuh eksekusi.
 
-=== TAHAP 2: FITUR NARASI (dari upstream, commit ini) ===
-1. Baca MIND/KEPUTUSAN.md dulu: narasi = REPORT-ONLY SELAMANYA.
-2. Verifikasi denyut :05 berikutnya:
-   - cache/fng.json + cache/news.json terisi (ls -la cache/)
-   - curl -s 127.0.0.1:8080/api/sentiment | head -c 200 -> JSON fng+news
-   - Dashboard (via tunnel) menampilkan badge F&G + panel BERITA 24J
-3. Verifikasi digest 00:15 malam ini:
-   - TERKIRIM ke Telegram Nahkoda (bukan cuma file)
-   - berisi blok NARASI (fear_greed + berita) dirangkum GLM
-   - tersimpan di log/digests/
+2. RESTART web: systemctl --user restart hermes-web
+   Uji: curl -s 127.0.0.1:8080/api/watchqueue  (awalnya [] — normal)
 
-=== ATURAN ===
-- Jika fetch F&G/RSS gagal di VPS: jangan patch — fallback kosong adalah
-  perilaku benar; laporkan error verbatim.
-- DILARANG: ubah config/engine/sizing/logika entry, commit kredensial,
-  ubah bind dashboard, kerjakan BACKLOG /stop /on (tunggu tugas eksplisit).
-- Append SESSION-LOG + commit + push tiap penyelesaian tahap.
-- Langkah ambigu -> BERHENTI, laporkan, tunggu Nahkoda.
+3. UJI MODUL: ./hermes-env/bin/python -m hermes_bot.core.watchqueue
+   Harus cetak "watchqueue smoke PASS".
+
+4. DENYUT :05 BERIKUTNYA: ./hermes-env/bin/python -m hermes_bot.run_scan
+   - output denyut kini berisi baris "watchqueue: BTC 2.3h(mendekat), ..."
+   - curl -s 127.0.0.1:8080/api/watchqueue | head -c 300 -> JSON per koin
+   - denyut TETAP 0 token tambahan (watchqueue tidak manggil GLM)
+
+5. Denyut berikutnya lagi: ETA koin harus BERUBAH (adaptif dari history
+   cache/dist_history.json) — trend berubah menjauh/mendekat sesuai
+   pergerakan. Laporkan dua baris watchqueue berturut-turut verbatim.
+
+6. DASHBOARD: panel "Watch-Queue" tampil (tabel Koin/Jarak/ETA/Arah,
+   warna: hijau mendekat, merah menjauh, kuning datar).
+
+7. PENUTUP: append SESSION-LOG (bukti verbatim langkah 3-6), commit+push,
+   hapus TUGAS-AKTIF.md ini.
+
+DILARANG: ubah config.yaml, engine, sizing, logika entry; watchqueue
+BOLEH tampil di denyut/digest tapi TIDAK BOLEH memicu entry apa pun.
+Jika error -> laporkan verbatim, JANGAN patch sendiri.

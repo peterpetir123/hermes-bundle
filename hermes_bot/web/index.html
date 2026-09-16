@@ -109,6 +109,12 @@ button.on{border-color:var(--blue);color:var(--blue)}
 </div>
 
 <div class="sec">
+  <h2>Watch-Queue <span class="na">(ETA adaptif ke TRIGGER — report-only, bukan janji)</span></h2>
+  <table id="wqTable"><thead><tr><th>Koin</th><th>Jarak</th><th>ETA (hari)</th><th>Arah</th></tr></thead>
+  <tbody><tr><td colspan="4" class="na">memuat…</td></tr></tbody></table>
+</div>
+
+<div class="sec">
   <h2>Narasi Pasar <span class="na">(report-only — bukan sinyal entry)</span></h2>
   <div class="row"><span class="pill" id="fng">Fear&Greed: –</span></div>
   <div class="md" id="news">memuat…</div>
@@ -342,8 +348,23 @@ function loadSentiment(){
   }).catch(function(){$id("news").textContent="gagal memuat"});
 }
 
+function loadWatchqueue(){
+  fetch("/api/watchqueue").then(function(r){return r.json()}).then(function(wq){
+    var tb=$id("wqTable").querySelector("tbody");
+    tb.innerHTML = (wq&&wq.length)
+      ? wq.map(function(x){
+          var c = x.trend==="mendekat"?"#46a758":x.trend==="menjauh"?"#e5484d":"#e5a000";
+          return "<tr><td>"+x.coin+"</td><td>"+x.dist_atr+" ATR</td><td>"+x.eta_days+
+                 "</td><td style='color:"+c+"'>"+x.trend+"</td></tr>";
+        }).join("")
+      : "<tr><td colspan='4' class='na'>kosong (denyut :05 berikutnya mengisi)</td></tr>";
+  }).catch(function(){
+    $id("wqTable").querySelector("tbody").innerHTML="<tr><td colspan='4' class='na'>gagal memuat</td></tr>";
+  });
+}
+
 function refresh(){
-  loadState(); loadScan(); loadCandles(CUR); loadBacktest(CUR); loadMind(); loadEquity(); loadSentiment();
+  loadState(); loadScan(); loadCandles(CUR); loadBacktest(CUR); loadMind(); loadEquity(); loadSentiment(); loadWatchqueue();
 }
 
 (function init(){
