@@ -2,25 +2,14 @@
 
 > Kerjakan HANYA saat Nahkoda memberi tugas eksplisit. Urutan = prioritas.
 
-## 1. [Besok, 13-14 Sep] Telegram alert dasar
-- Nahkoda buat bot via @BotFather -> token + chat_id-nya -> isi .env VPS
-  (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID) — TIDAK di-commit.
-- Verifikasi: alert_open/alert_close/digest terkirim nyata ke HP Nahkoda.
-- Fungsi kirim sudah ada di notify/telegram_bot.py — tinggal kredensial.
+## 1. [SELESAI 13 Sep] Telegram alert dasar
+- alert_open/close/system/digest sudah ada; kredensial di .env VPS (Nahkoda pasang, Hermes verifikasi).
 
-## 2. [Setelah alert dasar jalan] Telegram kontrol /stop /on /status
-- /stop  -> touch KILL   (entry dibekukan; denyut tetap jalan — mekanisme
-            KILL-switch SUDAH ADA di exec/risk.py + watchdog)
-- /on    -> rm KILL
-- /status -> balas 3 baris: mode, equity, posisi terbuka, alarm aktif
-- WAJIB: whitelist chat_id (hanya chat_id Nahkoda dipatuhi; pesan lain
-  diabaikan + dicatat). Balasan konfirmasi tiap perintah.
-- Arsitektur: long-polling getUpdates ringan (stdlib), jangan webhook
-  (butuh TLS/publik). Poll interval 5s cukup. Resource VPS 2GB aman.
-- DILARANG: perintah lain (jangan buat /sell /buy /close — mesin aturan
-  yang memutus, bukan chat).
+## 2. [SELESAI 13 Sep] Telegram kontrol /off /on /status /ask /learn
+- /off (pause total + guard posisi), /on (SOP penuh), /status (mode+equity+posisi), /ask (GLM Q&A)
+- /learn (belajar mandiri), /learn off — verifikasi end-to-end 13-14 Sep.
 
-## 1b. [SELESAI 13 Sep — pindah ke done] Telegram alert dasar
+## 1b. [SELESAI 13 Sep — dipindah ke done] Telegram alert dasar
 - alert_open/close/system/digest sudah ada; tinggal kredensial di .env VPS
   (Nahkoda sudah pasang — Hermes verifikasi alert nyata ke HP).
 
@@ -28,6 +17,12 @@
 - core/sentiment.py: fear_greed() + headlines() cache 1 jam, 0 token.
 - Digest memuat blok NARASI; dashboard /api/sentiment + panel.
 - KEPUTUSAN: report-only selamanya sampai backtest membuktikan nilai.
+
+## 5. [16 Sep, DIPASANG] Self-learning mode (belajar mandiri)
+- core/learn.py: HNRSS search (10 topik berputar) → GLM summarize → jurnal MIND/PEMBELAJARAN.md.
+- /learn on + /learn off di tg_control.py; cron tiap :20; 1 sesi/hari; 0 token per denyut.
+- KEPUTUSAN: report-only — proposal masuk BACKLOG, butuh backtest n≥100/PF≥1.1/totR>0 + persetujuan Nahkoda.
+- FIX: model reasoning butuh max_tokens=2000 untuk input panjang; retry 1x pada GLM kosong (router flaky).
 
 ## 3. [20 Sep] Evaluasi XRP
 - XRP merah di dual-window (PF 0.56, -3.2R, MC p95 6.9).

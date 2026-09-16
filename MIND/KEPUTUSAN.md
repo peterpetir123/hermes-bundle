@@ -4,6 +4,8 @@
 
 | Tanggal | Keputusan | Alasan | Sumber Otoritas |
 |---|---|---|---|
+| 2026-09-16 | Self-learning mode: `/learn` = on, `/learn off` = off; 1 sesi/hari via cron, sumber dari internet (HNRSS, 10 topik berputar) → jurnal MIND/PEMBELAJARAN.md; usulan inovasi → MIND/BACKLOG.md dengan syarat bukti (backtest n≥100/PF≥1.1/totR>0) + persetujuan Nahkoda | belajar mandiri tanpa membeli beban modal; report-only untuk parameter/engine/sizing — tidak pernah auto-apply | Nahkoda |
+| 2026-09-16 | Tambah DeepSeek v4.1 Flash ke model pool (glm_client MODELS); default tetap glm-5.3-flash, deepseek bisa dipanggil via `model="deepseek-v4.1-flash"` | DeepSeek didukung router juan.web.id, terverifikasi; memberi opsi comparison GLM vs DeepSeek dalam satu tempat tanpa ubah infrastruktur | Nahkoda |
 | 2026-09-14 | Watch-Queue Protocol: ETA adaptif (kecepatan dist_atr antar denyut) + fallback 1 ATR/hari, ranking terdekat dulu, REPORT-ONLY — tidak pernah gate eksekusi | permintaan Nahkoda ("koin A 3 hari lagi, cari yang lebih cepat"); ETA = estimasi prioritas perhatian, BUKAN janji harga | Nahkoda |
 | 2026-09-13 | Narasi (Fear&Greed + RSS berita) masuk digest + dashboard, REPORT-ONLY SELAMANYA hingga ada backtest yang membuktikan nilai prediktifnya | pelajaran M15: 24.560 trade negatif — menambah sinyal tanpa bukti = membakar modal; narasi tidak pernah gate eksekusi | Nahkoda + vault §7 |
 | 2026-09-13 | Cache sentimen/berita 1 jam (cache/fng.json, cache/news.json) | denyut tiap 30 mnt tidak boleh boros API; digest 1x/hari yang merangkum via GLM | efisiensi token |

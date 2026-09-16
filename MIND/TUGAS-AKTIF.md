@@ -1,33 +1,49 @@
-# TUGAS AKTIF Hermes — Watch-Queue (ETA adaptif) verifikasi (14 Sep)
+# TUGAS AKTIF Hermes — Self-Learn + DeepSeek verifikasi (16 Sep)
 
 > Demo Week tetap berjalan. Setelah selesai & terverifikasi: hapus file
 > ini, catat di SESSION-LOG.
 
-1. cd ~/hermes-bundle && git pull  (harus dapat commit watchqueue)
-   Baca MIND/KEPUTUSAN.md entri watch-queue: REPORT-ONLY, ETA = estimasi
-   prioritas perhatian BUKAN janji. Tidak menyentuh eksekusi.
+## A. Self-Learning Module
 
-2. RESTART web: systemctl --user restart hermes-web
-   Uji: curl -s 127.0.0.1:8080/api/watchqueue  (awalnya [] — normal)
+1. cd ~/hermes-bundle && git pull
+   Baca MIND/KEPUTUSAN.md entri self-learning: REPORT-ONLY, proposal masuk
+   BACKLOG, butuh backtest + persetujuan Nahkoda.
 
-3. UJI MODUL: ./hermes-env/bin/python -m hermes_bot.core.watchqueue
-   Harus cetak "watchqueue smoke PASS".
+2. UJI MODUL OFFLINE: ./hermes-env/bin/python -m hermes_bot.core.learn
+   Harus cetak "learn smoke PASS (offline)".
 
-4. DENYUT :05 BERIKUTNYA: ./hermes-env/bin/python -m hermes_bot.run_scan
-   - output denyut kini berisi baris "watchqueue: BTC 2.3h(mendekat), ..."
-   - curl -s 127.0.0.1:8080/api/watchqueue | head -c 300 -> JSON per koin
-   - denyut TETAP 0 token tambahan (watchqueue tidak manggil GLM)
+3. UJI MODUL LIVE (with flag):
+   touch LEARN
+   ./hermes-env/bin/python -m hermes_bot.core.learn --run
+   - Harus mengembalikan balasan GLM tentang 1 artikel dari internet.
+   - Periksa MIND/PEMBELAJARAN.md — harus ada entry baru.
+   - Cegah dobel sesi: jalankan lagi — harus balas "sudah jalan, besok lagi".
+   rm LEARN cache/learn_last.json
 
-5. Denyut berikutnya lagi: ETA koin harus BERUBAH (adaptif dari history
-   cache/dist_history.json) — trend berubah menjauh/mendekat sesuai
-   pergerakan. Laporkan dua baris watchqueue berturut-turut verbatim.
+4. UJI TELEGRAM: kirim /learn di Telegram
+   - Hermes harus aktifkan LEARN + langsung jalankan sesi pertama.
+   - /status harus tampilkan "mode belajar: AKTIF (1 sesi/hari)".
+   - /learn off harus matikan mode.
+   - /status harus tampilkan "mode belajar: mati".
 
-6. DASHBOARD: panel "Watch-Queue" tampil (tabel Koin/Jarak/ETA/Arah,
-   warna: hijau mendekat, merah menjauh, kuning datar).
+5. CRON: pastikan cron entry ":20 * * * * learn" ada di crontab.
 
-7. PENUTUP: append SESSION-LOG (bukti verbatim langkah 3-6), commit+push,
+## B. DeepSeek v4.1 Flash
+
+6. UJI MODEL: ./hermes-env/bin/python -c "
+import sys; sys.path.insert(0,'.'); import os
+for line in open('.env'):
+    line=line.strip()
+    if line and not line.startswith('#') and '=' in line:
+        k,v=line.split('=',1); os.environ.setdefault(k.strip(), v.strip())
+from hermes_bot.report.glm_client import chat
+print(chat([{'role':'user','content':'balas: siap'}], model='deepseek-v4.1-flash'))
+"
+   Harus cetak "siap" atau jawaban (bukan GLM_ERROR).
+
+7. PENUTUP: append SESSION-LOG (bukti verbatim langkah 2-6), commit+push,
    hapus TUGAS-AKTIF.md ini.
 
-DILARANG: ubah config.yaml, engine, sizing, logika entry; watchqueue
-BOLEH tampil di denyut/digest tapi TIDAK BOLEH memicu entry apa pun.
+DILARANG: ubah config.yaml, engine, sizing, logika entry; belajar TIDAK
+pernah mengubah mesin tanpa backtest + persetujuan Nahkoda.
 Jika error -> laporkan verbatim, JANGAN patch sendiri.

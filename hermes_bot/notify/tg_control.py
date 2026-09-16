@@ -70,6 +70,7 @@ def cmd_status():
              f"equity: ${st.get('equity', 0):.2f} · day_pnl: {st.get('day_pnl', 0):+.2f}",
              f"posisi terbuka: {len(st['positions'])}/3 · halted: {st.get('halted')}",
              f"KILL-switch: {'AKTIF (entry beku)' if os.path.exists('KILL') else 'tidak aktif'}",
+             f"mode belajar: {'🎓 AKTIF (1 sesi/hari)' if os.path.exists('LEARN') else 'mati (/learn)'}",
              f"denyut sinyal terakhir: {age:.1f} jam lalu" if age is not None
              else "denyut: TIDAK ADA DATA"]
     return "\n".join(lines)
@@ -127,6 +128,26 @@ def cmd_ask(q):
         return f"/ask gagal: {str(e)[:150]}"
 
 
+def cmd_learn(arg):
+    """Mode belajar mandiri: /learn (aktif+sesi pertama) / /learn off."""
+    if arg in ("off", "mati"):
+        if os.path.exists("LEARN"):
+            os.remove("LEARN")
+            return "🎓 *MODE BELAJAR DIMATIKAN* — tidak ada sesi baru.\nJurnal tetap: MIND/PEMBELAJARAN.md"
+        return "🎓 mode belajar memang sudah mati."
+    if os.path.exists("LEARN"):
+        from hermes_bot.core.learn import run_session
+        return "🎓 mode belajar SUDAH AKTIF. " + run_session()
+    open("LEARN", "w").write(time.strftime("%Y-%m-%d %H:%M:%S UTC",
+                                           time.gmtime()))
+    from hermes_bot.core.learn import run_session
+    return ("🎓 *MODE BELAJAR AKTIF*\n"
+            "1 sesi/hari: riset internet (10 topik berputar) -> jurnal "
+            "MIND/PEMBELAJARAN.md; usulan inovasi masuk BACKLOG dan WAJIB "
+            "lolos backtest + persetujuanmu. Tidak pernah mengubah mesin.\n\n"
+            + run_session())
+
+
 def handle_update(msg):
     chat = str(msg.get("chat", {}).get("id", ""))
     if chat != ALLOW:
@@ -149,6 +170,11 @@ def handle_update(msg):
             _reply(chat, "pakai: /ask <pertanyaan>")
         else:
             _reply(chat, cmd_ask(q))
+    elif low == "/learn":
+        _reply(chat, cmd_learn(""))
+    elif low.startswith("/learn"):
+        arg = text[6:].strip().lower()
+        _reply(chat, cmd_learn(arg))
     elif low in ("/start", "/help"):
         _reply(chat, "🤖 *HERMES CONTROL*\n"
                      "/status — kondisi mesin\n"
@@ -156,6 +182,8 @@ def handle_update(msg):
                      "/off yakin — paksa hentikan meski ada posisi terbuka\n"
                      "/on — nyalakan kembali SOP penuh\n"
                      "/ask <tanya> — tanya status via GLM\n"
+                     "/learn — AKTIFKAN belajar mandiri (1 sesi/hari, jurnal MIND/)\n"
+                     "/learn off — matikan belajar mandiri\n"
                      "teks bebas — masuk inbox Hermes (dibaca sesi berikut)")
     elif text:
         os.makedirs(os.path.dirname(INBOX), exist_ok=True)

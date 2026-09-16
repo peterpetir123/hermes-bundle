@@ -9,6 +9,7 @@ printf '%s\n' \
 "10,40 * * * * cd $DIR && $PY -m hermes_bot.run_scan --monitor >> log/cron.log 2>&1" \
 "15 0 * * * cd $DIR && $PY -m hermes_bot.run_scan --digest >> log/cron.log 2>&1" \
 "*/30 * * * * cd $DIR && $PY -m hermes_bot.watchdog >> log/cron.log 2>&1" \
+"20 * * * * cd $DIR && $PY -m hermes_bot.core.learn >> log/cron.log 2>&1" \
 > "$CRON_FILE"
 ( crontab -l 2>/dev/null | grep -viE 'hermes[-_]?(bundle|bot|env)|run_scan|watchdog' || true ; cat "$CRON_FILE" ) | crontab -
 rm -f "$CRON_FILE"
