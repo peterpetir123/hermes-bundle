@@ -44,13 +44,70 @@ def one_coin(coin, cfg, years):
     return {"full": m, "y3": m3}
 
 
+def compare(coins, cfg):
+    """Adu BASE vs CONF2 vs BUF per gerbang KEPUTUSAN 2026-09-16.
+    Adopsi hanya jika satu varian menang POOLED: totR > BASE, PF >= BASE,
+    MC p95 tidak memburuk, n >= 80% BASE."""
+    from hermes_bot.core.sentiment import fng_history
+    s = cfg["strategy"]["don"]
+    kw = (s["sl_atr"], s["trail_atr"], s["volume_min"],
+          cfg["strategy"]["regime"]["erp_min"])
+    fng = fng_history()
+    rows_cache, res = {}, {}
+    for v in ("base", "conf2", "buf"):
+        res[v] = {"full": [], "y3": []}
+        for c in coins:
+            if c not in rows_cache:
+                rows_cache[c] = fetch(c, "1d", "1D", 3400)
+            rows = rows_cache[c]
+            if len(rows) < 300:
+                continue
+            t = replay(rows, *kw, fng_map=fng,
+                       variant=None if v == "base" else v)
+            cut = rows[-1][0] - 3 * 365 * 86_400_000
+            res[v]["full"].extend(t)
+            res[v]["y3"].extend([x for x in t if x["ts_out"] >= cut])
+    lines = ["# COMPARE varian narasi (gerbang KEPUTUSAN 2026-09-16)",
+             f"Tanggal: {datetime.date.today().isoformat()} | fng_map: {len(fng)} hari | "
+             f"koin: {','.join(coins)}", "",
+             "| Varian | Window | n | PF | totR | MC p95 |", "|---|---|---|---|---|---|"]
+    stat = {}
+    for v in ("base", "conf2", "buf"):
+        for w in ("full", "y3"):
+            m = metrics(res[v][w])
+            mc = monte_carlo(res[v][w])
+            m["mc_p95"] = mc["p95"] if mc else "-"
+            stat[(v, w)] = m
+            lines.append(f"| {v} | {w} | {m['n']} | {m['pf']} | {m['tot_r']} | {m['mc_p95']} |")
+    # gerbang adopsi pooled window FULL
+    b, gate = stat[("base", "full")], []
+    for v in ("conf2", "buf"):
+        m = stat[(v, "full")]
+        ok = (m["tot_r"] > b["tot_r"] and m["pf"] >= b["pf"]
+              and (m["mc_p95"] == "-" or b["mc_p95"] == "-" or m["mc_p95"] <= b["mc_p95"])
+              and m["n"] >= 0.8 * b["n"])
+        gate.append(f"- {v}: {'LOLOS' if ok else 'GAGAL'} gerbang vs BASE "
+                    f"(totR {m['tot_r']} vs {b['tot_r']}, PF {m['pf']} vs {b['pf']}, "
+                    f"n {m['n']} vs {b['n']})")
+    lines += ["", "## Keputusan gerbang (pooled FULL)"] + gate
+    os.makedirs(RESULTS, exist_ok=True)
+    with open(f"{RESULTS}/COMPARE-NARASI.md", "w") as f:
+        f.write("\n".join(lines) + "\n")
+    print("\n".join(lines))
+    print("\n->", f"{RESULTS}/COMPARE-NARASI.md")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--coin")
     ap.add_argument("--all", action="store_true")
+    ap.add_argument("--compare", action="store_true",
+                    help="adu BASE vs CONF2 vs BUF (varian narasi, KEPUTUSAN 2026-09-16)")
     args = ap.parse_args()
     cfg = yaml.safe_load(open("config.yaml"))
     coins = cfg["assets"]["d1_watchlist"] if args.all else [args.coin]
+    if args.compare:
+        return compare(coins, cfg)
     table = {}
     for c in coins:
         r = one_coin(c, cfg, 0)

@@ -31,6 +31,14 @@ strategy:
     erp_min: 0.55
     sma_window: 100
 
+# ---- Trigger adaptif narasi (KEPUTUSAN 2026-09-16: varian BUF lolos backtest) ----
+# mode: off = BASE murni (0.15 ATR) — default; buf = buffer menyesuaikan F&G
+#   (<25 -> 0.5 ATR, 25-44 -> 0.3, >=45 -> 0.15). F&G gagal fetch -> BASE.
+# conf2 kalah di gerbang (identik BASE) — tidak diimplementasi.
+# AKTIVASI bukan keputusan otomatis: tunggu WEEK-REPORT 20 Sep + oke Nahkoda.
+narrative_trigger:
+  mode: "off"
+
 # ---- Risk Engine ----
 risk:
   risk_pct: 0.067            # quarter-Kelly 6.7%

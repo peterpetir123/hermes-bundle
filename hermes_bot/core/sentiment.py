@@ -36,6 +36,33 @@ def fear_greed():
     return _cached("fng.json", _f)
 
 
+def fng_history():
+    """Seluruh sejarah F&G (alternative.me, sejak 2018) -> {date: value}.
+    Disimpan permanen di data/fng_history.json (di-commit: reproducibility
+    backtest). Hanya fetch ulang bila file belum ada / kemarin belum ada."""
+    path = os.path.join(os.path.dirname(__file__), "..", "..", "data",
+                        "fng_history.json")
+    try:
+        hist = json.load(open(path))
+    except Exception:
+        hist = {}
+    today = time.strftime("%Y-%m-%d", time.gmtime())
+    if today in hist:
+        return hist
+    try:
+        req = urllib.request.Request("https://api.alternative.me/fng/?limit=0",
+                                     headers=UA)
+        d = json.loads(urllib.request.urlopen(req, timeout=30).read())
+        for x in d["data"]:
+            hist[time.strftime("%Y-%m-%d",
+                               time.gmtime(int(x["timestamp"])))] = int(x["value"])
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        json.dump(hist, open(path, "w"))
+    except Exception:
+        pass
+    return hist
+
+
 def headlines(n=8, feed="https://cointelegraph.com/rss"):
     """n headline terbaru dari RSS crypto. [{'title','date'}] atau []."""
     def _f():
@@ -71,4 +98,6 @@ if __name__ == "__main__":
     hl = headlines()
     assert "value" in fg and 0 <= fg["value"] <= 100, f"F&G rusak: {fg}"
     assert isinstance(hl, list), "headlines harus list"
-    print("sentiment smoke PASS:", fg, f"| {len(hl)} headline")
+    h = fng_history()
+    assert len(h) > 2000, f"fng_history terlalu sedikit: {len(h)}"
+    print(f"sentiment smoke PASS: {fg} | {len(hl)} headline | fng_history {len(h)} hari")

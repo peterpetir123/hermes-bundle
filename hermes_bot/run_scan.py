@@ -2,7 +2,7 @@
 Pipeline: config -> data -> regime -> signal -> risk -> exec -> trailing
 -> log -> digest (opsional). Polymarket = overlay laporan, bukan gate.
 """
-import argparse, json, os, shutil, sys, urllib.request
+import argparse, json, os, shutil, sys, time, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -75,6 +75,23 @@ def _periodic_report(state, cfg):
         tg.alert_system(f"periodic report gagal: {str(e)[:120]}")
 
 
+def narrative_buf(cfg):
+    """buf_atr efektif dari mode narasi (KEPUTUSAN 2026-09-16, report-only
+    modulasi trigger; BUKAN buka entry). off / F&G gagal -> 0.15 = BASE."""
+    mode = cfg.get("narrative_trigger", {}).get("mode", "off")
+    mode = str(mode if mode is not None else "off").lower()  # yaml: off=False
+    if mode != "buf":
+        return 0.15, None, mode
+    try:
+        from hermes_bot.core.sentiment import fear_greed
+        v = fear_greed().get("value")
+        if v is None:
+            return 0.15, None, mode
+        return (0.5 if v < 25 else 0.3 if v < 45 else 0.15), v, mode
+    except Exception:
+        return 0.15, None, mode
+
+
 def main(digest=False):
     # PAUSE = Hermes dihentikan via /off: tidak ada analisa/fetch/LLM/entry/
     # monitor/digest sama sekali. Infrastruktur (Telegram, watchdog) tetap hidup.
@@ -91,6 +108,7 @@ def main(digest=False):
         shutil.copy("state/state.json", "state/state.json.bak")
     state = load_state()
     rows_map, scans, lines = {}, [], []
+    buf, fngv, mode = narrative_buf(cfg)
 
     for coin in assets:
         rows = fetch(coin, "1d", "1D", cfg["data"]["min_bars"] + 100)
@@ -98,11 +116,13 @@ def main(digest=False):
             lines.append(f"{coin}: NO_DATA")
             continue
         rows_map[coin] = rows
-        sig = scan_don(rows)
+        sig = scan_don(rows, buf_atr=buf)
         sig["coin"] = coin
         scans.append(sig)
         lines.append(f"{coin}: {sig['status']} ({sig.get('regime')}, "
                      f"vol {sig.get('vol_ratio')}x, dist {sig.get('dist_atr')} ATR)")
+    lines.append(f"narasi_trigger: mode={mode} fng={fngv} buf={buf} ATR "
+                 f"(report-only modulasi; KEPUTUSAN 2026-09-16)")
 
     # Polymarket overlay (report-only)
     pm_lines = ["polymarket: disabled"]
