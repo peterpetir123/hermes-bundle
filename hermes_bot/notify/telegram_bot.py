@@ -29,6 +29,17 @@ def alert_close(c):
     return _send(f"*HERMES* CLOSE {c['coin']} {e}\nexit `{c['exit']:.6g}` | *{c['r']:+.2f}R*\nalasan {c['reason']}")
 
 
+def alert_trail(pos, sl):
+    """Trigger saat SL naik (trail) = de-facto TP mesin ini. 0 token."""
+    entry = pos["entry"]
+    lock = (sl - entry) / entry * 100
+    tag = (f"profit terkunci +{lock:.2f}%" if lock > 0
+           else f"belum profit (SL {lock:.2f}%)")
+    return _send(f"*HERMES* TRAIL-UP {pos['coin']}\n"
+                 f"SL naik -> `{sl:.6g}` (entry {entry:.6g})\n"
+                 f"{tag} | mesin ini tanpa TP tetap: TP-nya = trail ini")
+
+
 def alert_system(msg):
     return _send(f"⚠️ *HERMES SYSTEM*\n{msg}")
 

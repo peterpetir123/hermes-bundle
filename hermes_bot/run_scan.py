@@ -46,6 +46,8 @@ def monitor(cfg):
         n_ev += 1
         if ev.get("event") == "CLOSED_TRAIL":
             tg.alert_close(ev)
+        elif ev.get("event") == "TRAIL_UP":
+            tg.alert_trail(ev, ev["sl"])
         elif ev.get("event") == "CLOSE_FAIL":
             tg.alert_system(f"close gagal {ev.get('coin')}: {ev.get('r')}")
     print(f"monitor: {len(coins)} posisi dicek ({', '.join(coins)}), {n_ev} event")
@@ -152,6 +154,8 @@ def main(digest=False):
     for ev in manage(cfg, rows_map):
         if ev.get("event") == "CLOSED_TRAIL":
             tg.alert_close(ev)
+        elif ev.get("event") == "TRAIL_UP":
+            tg.alert_trail(ev, ev["sl"])
         elif ev.get("event") == "CLOSE_FAIL":
             tg.alert_system(f"close gagal {ev['coin']}: {ev.get('r')}")
         # hippocampus: episod penutupan (dipakai RPE saat outcome final)
