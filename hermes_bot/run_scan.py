@@ -154,6 +154,14 @@ def main(digest=False):
             tg.alert_close(ev)
         elif ev.get("event") == "CLOSE_FAIL":
             tg.alert_system(f"close gagal {ev['coin']}: {ev.get('r')}")
+        # hippocampus: episod penutupan (dipakai RPE saat outcome final)
+        try:
+            from hermes_bot.core import hippo
+            hippo.encode("trade", ctx={"coin": ev.get("coin")},
+                         decision=ev.get("event"), r=ev.get("r"),
+                         salience=1.5 if ev.get("r") is not None else 1.0)
+        except Exception:
+            pass  # memori gagal menulis tidak boleh menghalangi trading
 
     # watch-queue (report-only, MIND/KEPUTUSAN.md): ETA adaptif ke TRIGGER
     try:
