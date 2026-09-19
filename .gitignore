@@ -6,3 +6,6 @@ log/*
 cache/*
 state/*
 KILL
+PAUSE
+LEARN
+KILL
